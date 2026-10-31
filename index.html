@@ -125,7 +125,7 @@ async function api(body){
   const {data:{session}}=await sb.auth.getSession();
   if(!session)return{error:"Oturum yok"};
   try{
-    const r=await fetch(SB_URL+"/functions/v1/sms",{method:"POST",headers:{"Content-Type":"application/json",apikey:SB_KEY,Authorization:"Bearer "+session.access_token},body:JSON.stringify(body)});
+    const r=await fetch(SB_URL+"/functions/v1/smart-worker",{method:"POST",headers:{"Content-Type":"application/json",apikey:SB_KEY,Authorization:"Bearer "+session.access_token},body:JSON.stringify(body)});
     return await r.json();
   }catch(e){return{error:"Bağlantı hatası, tekrar dene"}}
 }
