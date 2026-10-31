@@ -199,7 +199,9 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
   <div class="card"><h2>Satış fiyatları</h2>
     <p class="sub">Servis için kendi satış fiyatını yaz. "Tüm ülkeler" seçersen fiyat o servisin her ülkesinde geçerli olur; tek ülke için girdiğin fiyat onu geçersiz kılar. Boş bıraktığın servis varsayılan marjla satılır.</p>
     <label for="pc">Ülke</label><select id="pc"></select>
-    <label for="pq">Servis ara</label><input id="pq" type="text" placeholder="Örn. wa" autocomplete="off">
+    <label for="pq">Servis ara</label><input id="pq" type="text" placeholder="Ad veya kod, örn. wa" autocomplete="off">
+    <label for="ps">En az stok</label><input id="ps" type="number" inputmode="numeric" min="0" placeholder="Örn. 100">
+    <label for="so">Sırala</label><select id="so"><option value="n">Ada göre</option><option value="s">Stok (çoktan aza)</option><option value="c">Maliyet (düşükten yükseğe)</option></select>
     <div id="plist" style="margin-top:8px"></div></div>
   <div class="card"><h2>Servis adları</h2>
     <p class="sub">Her satıra bir servis yaz: kod=Ad (örn. wa=WhatsApp). Adı boş olan satırlar atlanır. Servis kodlarını Turonay’ın fiyatlar sayfasında görebilirsin.</p>
@@ -411,7 +413,9 @@ function drawPrices(){
   const box=$("plist");box.innerHTML="";
   if(!pcData)return;
   const q=$("pq").value.toLowerCase();
-  const rows=pcData.filter(r=>(NAMES[r.service]||r.service).toLowerCase().includes(q));
+  const minS=Number($("ps").value)||0,so=$("so").value;
+  const rows=pcData.filter(r=>((NAMES[r.service]||"").toLowerCase().includes(q)||r.service.toLowerCase().includes(q))&&r.count>=minS);
+  if(so==="s")rows.sort((x,y)=>y.count-x.count);else if(so==="c")rows.sort((x,y)=>x.cost-y.cost);
   if(!rows.length){box.appendChild(mk("div","empty","Servis bulunamadı"));return}
   rows.slice(0,60).forEach(r=>{
     const d=mk("div","ord"),h=mk("div","oh");
@@ -433,7 +437,7 @@ function drawPrices(){
   });
   if(rows.length>60)box.appendChild(mk("div","sub","İlk 60 servis gösteriliyor, diğerleri için ara."));
 }
-$("pc").onchange=loadPrices;$("pq").oninput=drawPrices;
+$("pc").onchange=loadPrices;$("pq").oninput=drawPrices;$("ps").oninput=drawPrices;$("so").onchange=drawPrices;
 
 async function loadNames(){
   const {data}=await sb.from("service_names").select("code,name");
