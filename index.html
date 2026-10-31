@@ -196,9 +196,14 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
     <label for="ibn">IBAN sahibi adı</label><input id="ibn" type="text">
     <label for="ib">IBAN</label><input id="ib" type="text">
     <button class="btn" id="aset" style="margin-top:14px">Kaydet</button></div>
+  <div class="card"><h2>Tedarik ürünleri</h2>
+    <p class="sub">Tedarik menüsünde satılan ülke ve servisler. Buradan kaldırabilirsin. Yeni eklemek için aşağıdaki düğmeye bas.</p>
+    <div id="slist"></div>
+    <button class="btn" id="sadd" style="margin-top:14px;width:100%">+ Ülke ve servis ekle</button></div>
   <div class="card"><h2>Satış fiyatları</h2>
     <p class="sub">Servis için kendi satış fiyatını yaz. "Tüm ülkeler" seçersen fiyat o servisin her ülkesinde geçerli olur; tek ülke için girdiğin fiyat onu geçersiz kılar. Boş bıraktığın servis varsayılan marjla satılır.</p>
-    <label for="pm">Fiyat türü</label><select id="pm"><option value="n">Normal satış</option><option value="s">Tedarik (sadece izinli e-postalar)</option></select>
+    <label for="pm">Hangi fiyatı düzenliyorsun?</label><select id="pm"><option value="n">Normal satış fiyatı</option><option value="s">Tedarik ürünleri (ekle ve fiyatla)</option></select>
+    <p class="sub hide" id="phint" style="margin-top:8px">Tedarik modu: ülkeyi seç, satmak istediğin servise fiyat yazıp Kaydet de. Fiyat yazdığın servis tedarik menüsüne eklenir.</p>
     <label for="pc">Ülke</label><select id="pc"></select>
     <label for="pq">Servis ara</label><input id="pq" type="text" placeholder="Ad veya kod, örn. wa" autocomplete="off">
     <label for="ps">En az stok</label><input id="ps" type="number" inputmode="numeric" min="0" placeholder="Örn. 100">
@@ -436,7 +441,7 @@ async function loadAdmin(){
     const a=mk("div","meta"),ok=mk("button","btn sm","Onayla"),no=mk("button","btn danger sm","Reddet");
     ok.onclick=()=>decide(d.id,true);no.onclick=()=>decide(d.id,false);a.append(ok,no);row.appendChild(a);pd.appendChild(row);
   });
-  if(!$("pc").options.length)loadPriceCountries();
+  if(!$("pc").options.length)loadPriceCountries();else loadSupplyList();
   api({action:"admin_access_get"}).then(x=>{if(x.emails)$("sa").value=x.emails.join("\n")});
   $("mk").value=r.markup;$("ib").value=r.iban;$("ibn").value=r.name;
   const ul=$("ausers");ul.innerHTML="";
@@ -450,7 +455,7 @@ async function loadPriceCountries(){
   const ph=mk("option",null,"Ülke seç…");ph.value="";sel.appendChild(ph);
   const all=mk("option",null,"Tüm ülkeler (varsayılan, yavaş yüklenir)");all.value="*";sel.appendChild(all);
   Object.values(r.countries).sort((x,y)=>x.eng.localeCompare(y.eng)).forEach(c=>{const o=mk("option",null,c.eng);o.value=c.id;sel.appendChild(o)});
-  loadPrices();
+  loadPrices();loadSupplyList();
 }
 async function loadPrices(){
   if(!$("pc").value){pcData=null;$("plist").textContent="Fiyat girmek için bir ülke seç.";return}
@@ -478,16 +483,38 @@ function drawPrices(){
       if(!(v>0)){toast("Geçerli bir fiyat yaz");return}
       if(v<r.cost&&!confirm("Satış fiyatı maliyetin altında, zarar edersin. Devam?"))return;
       const x=await api({action:sup?"admin_supply_set":"admin_price_set",country:$("pc").value,service:r.service,price:v});
-      toast(x.error||"Fiyat kaydedildi");if(!x.error)loadPrices();
+      toast(x.error||"Fiyat kaydedildi");if(!x.error){loadPrices();if(sup)loadSupplyList()}
     };
     a.appendChild(sv);
     if(r.override!=null){const rs=mk("button","btn danger sm",sup?"Satıştan kaldır":"Sıfırla");
-      rs.onclick=async()=>{const x=await api({action:sup?"admin_supply_set":"admin_price_set",country:$("pc").value,service:r.service,reset:true});toast(x.error||"Varsayılana döndü");if(!x.error)loadPrices()};a.appendChild(rs)}
+      rs.onclick=async()=>{const x=await api({action:sup?"admin_supply_set":"admin_price_set",country:$("pc").value,service:r.service,reset:true});toast(x.error||(sup?"Tedarikten kaldırıldı":"Varsayılana döndü"));if(!x.error){loadPrices();if(sup)loadSupplyList()}};a.appendChild(rs)}
     d.append(h,inp,a);box.appendChild(d);
   });
   if(rows.length>60)box.appendChild(mk("div","sub","İlk 60 servis gösteriliyor, diğerleri için ara."));
 }
-$("pc").onchange=loadPrices;$("pm").onchange=loadPrices;$("pq").oninput=drawPrices;$("ps").oninput=drawPrices;$("so").onchange=drawPrices;
+$("pc").onchange=loadPrices;const phint=()=>$("phint").classList.toggle("hide",$("pm").value!=="s");
+$("pm").onchange=()=>{phint();loadPrices()};
+$("sadd").onclick=()=>{$("pm").value="s";$("pc").value="";phint();loadPrices();$("pm").scrollIntoView({behavior:"smooth",block:"center"});toast("Ülkeyi seç, satacağın servislere fiyat yaz")};
+function cname(id){const o=[...$("pc").options].find(x=>x.value===id);return o?o.textContent:"Ülke "+id}
+async function loadSupplyList(){
+  const box=$("slist");
+  const {data,error}=await sb.from("supply_prices").select("*").order("country").order("service");
+  box.innerHTML="";
+  if(error){box.appendChild(mk("div","sub","Liste okunamadı: "+error.message));return}
+  if(!data.length){box.appendChild(mk("div","empty","Tedarikte henüz ürün yok."));return}
+  const by={};data.forEach(r=>{(by[r.country]=by[r.country]||[]).push(r)});
+  Object.keys(by).forEach(c=>{
+    const g=mk("div","ord");g.appendChild(mk("b",null,cname(c)));
+    by[c].forEach(r=>{
+      const row=mk("div","meta");
+      row.appendChild(mk("span",null,(NAMES[r.service]||r.service.toUpperCase())+" · "+TL(r.price)));
+      const x=mk("button","btn danger sm","Kaldır");
+      x.onclick=async()=>{const z=await api({action:"admin_supply_set",country:c,service:r.service,reset:true});toast(z.error||"Kaldırıldı");loadSupplyList();if($("pm").value==="s")loadPrices()};
+      row.appendChild(x);g.appendChild(row);
+    });
+    box.appendChild(g);
+  });
+}$("pq").oninput=drawPrices;$("ps").oninput=drawPrices;$("so").onchange=drawPrices;
 
 $("sasave").onclick=async()=>{
   const emails=$("sa").value.split("\n").map(x=>x.trim()).filter(Boolean);
