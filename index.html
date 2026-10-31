@@ -156,10 +156,10 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
   <div class="av" id="av" aria-hidden="true"></div>
   <button class="btn ghost sm" id="out">Çıkış</button>
 </div></header>
-<nav class="nav" id="nav"><button data-v="buy" aria-selected="true">Numara al</button><button data-v="dep" aria-selected="false">Bakiye yükle</button><button data-v="adm" id="admtab" class="hide" aria-selected="false">Admin</button></nav>
+<nav class="nav" id="nav"><button data-v="buy" aria-selected="true">Numara al</button><button data-v="sup" id="suptab" class="hide" aria-selected="false">Tedarik</button><button data-v="dep" aria-selected="false">Bakiye yükle</button><button data-v="adm" id="admtab" class="hide" aria-selected="false">Admin</button></nav>
 <main><div id="v-buy" class="grid">
   <div class="card">
-    <h2>Numara al</h2><p class="sub">Ülkeyi ve servisi seç.</p>
+    <h2 id="bh">Numara al</h2><p class="sub">Ülkeyi ve servisi seç.</p>
     <label for="cs">Ülke</label>
     <input id="cs" type="text" placeholder="Ülke ara…" autocomplete="off">
     <div class="list" id="cty" role="group" aria-label="Ülkeler"></div>
@@ -198,6 +198,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
     <button class="btn" id="aset" style="margin-top:14px">Kaydet</button></div>
   <div class="card"><h2>Satış fiyatları</h2>
     <p class="sub">Servis için kendi satış fiyatını yaz. "Tüm ülkeler" seçersen fiyat o servisin her ülkesinde geçerli olur; tek ülke için girdiğin fiyat onu geçersiz kılar. Boş bıraktığın servis varsayılan marjla satılır.</p>
+    <label for="pm">Fiyat türü</label><select id="pm"><option value="n">Normal satış</option><option value="s">Tedarik (sadece izinli e-postalar)</option></select>
     <label for="pc">Ülke</label><select id="pc"></select>
     <label for="pq">Servis ara</label><input id="pq" type="text" placeholder="Ad veya kod, örn. wa" autocomplete="off">
     <label for="ps">En az stok</label><input id="ps" type="number" inputmode="numeric" min="0" placeholder="Örn. 100">
@@ -207,6 +208,10 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
     <p class="sub">Her satıra bir servis yaz: kod=Ad (örn. wa=WhatsApp). Adı boş olan satırlar atlanır. Servis kodlarını Turonay’ın fiyatlar sayfasında görebilirsin.</p>
     <textarea id="nt" rows="10" spellcheck="false" autocapitalize="off"></textarea>
     <button class="btn" id="nsave" style="margin-top:14px">Adları kaydet</button></div>
+  <div class="card"><h2>Tedarik erişimi</h2>
+    <p class="sub">Tedarik menüsünü sadece buraya yazdığın e-postalar görebilir. Her satıra bir e-posta yaz.</p>
+    <textarea id="sa" rows="6" spellcheck="false" autocapitalize="off"></textarea>
+    <button class="btn" id="sasave" style="margin-top:14px">Erişimi kaydet</button></div>
   <div class="card"><h2>Kullanıcılar</h2><div id="ausers"></div></div>
 </div>
 </main>
@@ -222,6 +227,7 @@ const sb=supabase.createClient(SB_URL,SB_KEY);
 const $=id=>document.getElementById(id);
 const TL=n=>Number(n).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})+" ₺";
 const NAMES={wa:"WhatsApp"};
+let smode="normal";const cats={normal:null,supply:null};
 let catalog=null,user=null,pollT=null,tickT=null,mode="in",selC=null,selS=null,busy=false;
 
 function toast(t){const e=$("toast");e.textContent=t;e.classList.remove("hide");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.add("hide"),3500)}
@@ -249,36 +255,51 @@ $("go").onclick=async()=>{
   if(error){$("amsg").style.color="var(--bad)";$("amsg").textContent=error.message;return}
   if(mode==="up"&&!data.session){$("amsg").style.color="var(--ok)";$("amsg").textContent="Kayıt tamam. E-postana gelen bağlantıya tıkla, sonra giriş yap."}
 };
-$("out").onclick=()=>sb.auth.signOut();
+$("out").onclick=async()=>{await sb.auth.signOut();location.reload()};
 
 /* catalog */
-let catBusy=false;
+const catBusy={normal:false,supply:false};
+const getCat=m=>m===smode?catalog:cats[m];
+const setCat=(m,v)=>{if(m===smode)catalog=v;else cats[m]=v};
 async function loadCatalog(){
-  if(catBusy)return;catBusy=true;
-  if(!catalog){
-    try{const c=localStorage.getItem("cty1");if(c){catalog={countries:JSON.parse(c),prices:{},loaded:{}};drawCountries()}}catch(e){}
+  const m=smode;
+  if(catBusy[m])return;catBusy[m]=true;
+  if(!getCat(m)&&m==="normal"){
+    try{const c=localStorage.getItem("cty1");if(c){setCat(m,{countries:JSON.parse(c),prices:{},loaded:{}});drawCountries()}}catch(e){}
   }
-  if(!catalog){const l=mk("div","sub","Ülkeler yükleniyor…");l.style.padding="12px";$("cty").replaceChildren(l)}
-  const r=await api({action:"catalog",service:"wa"});
-  catBusy=false;
+  if(!getCat(m)&&m===smode){const l=mk("div","sub","Ülkeler yükleniyor…");l.style.padding="12px";$("cty").replaceChildren(l)}
+  const r=await api(m==="supply"?{action:"supply_countries"}:{action:"catalog",service:"wa"});
+  catBusy[m]=false;
   if(r.error){
+    if(m!==smode)return;
     toast(r.error);
     if(!catalog){const bt=mk("button","btn sm","Tekrar dene");bt.style.margin="12px";bt.onclick=loadCatalog;$("cty").replaceChildren(mk("div","sub",r.error),bt)}
     return;
   }
-  if(!catalog)catalog={countries:{},prices:{},loaded:{}};
-  catalog.countries=r.countries;
-  try{localStorage.setItem("cty1",JSON.stringify(r.countries))}catch(e){}
-  drawCountries();
+  const cur=getCat(m)||{countries:{},prices:{},loaded:{}};
+  cur.countries=r.countries;setCat(m,cur);
+  if(m==="normal"){try{localStorage.setItem("cty1",JSON.stringify(r.countries))}catch(e){}}
+  if(m===smode)drawCountries();
 }
 async function pickCountry(id){
+  const m=smode;
   selC=id;selS=null;drawCountries();drawServices();upd();
-  if(catalog.loaded[id])return;
-  const r=await api({action:"catalog",country:id});
-  if(selC!==id&&!r.prices)return;
-  if(r.error){toast(r.error);if(selC===id){$("svc").replaceChildren(mk("div","sub",r.error))}return}
-  catalog.prices[id]=(r.prices&&r.prices[id])||{};catalog.loaded[id]=true;
-  if(selC===id){drawServices();upd()}
+  const cat=getCat(m);
+  if(cat.loaded[id])return;
+  const r=await api(m==="supply"?{action:"supply_services",country:id}:{action:"catalog",country:id});
+  if(r.error){if(m===smode&&selC===id){toast(r.error);$("svc").replaceChildren(mk("div","sub",r.error))}return}
+  cat.prices[id]=(r.prices&&r.prices[id])||{};cat.loaded[id]=true;
+  if(m===smode&&selC===id){drawServices();upd()}
+}
+function setSMode(m){
+  if(m===smode)return;
+  cats[smode]=catalog;smode=m;catalog=cats[m];selC=null;selS=null;
+  $("bh").textContent=m==="supply"?"Tedarik: numara al":"Numara al";
+  $("cs").value="";$("ss").value="";$("cty").innerHTML="";
+  if(catalog)drawCountries();
+  drawServices();upd();
+  if(!catalog)loadCatalog();
+  loadOrders();
 }
 function drawCountries(){
   const q=$("cs").value.toLowerCase(),box=$("cty");box.innerHTML="";
@@ -306,7 +327,7 @@ function upd(){
 $("cs").oninput=()=>catalog&&drawCountries();$("ss").oninput=()=>catalog&&drawServices();
 $("buy").onclick=async()=>{
   busy=true;upd();$("buy").textContent="Alınıyor…";
-  const r=await api({action:"buy",service:selS,country:selC});
+  const r=await api({action:smode==="supply"?"supply_buy":"buy",service:selS,country:selC});
   busy=false;$("buy").textContent="Numara al";upd();
   if(r.error)toast(r.error);else toast("Numara alındı. Kodu bekle.");
   await loadBalance();await loadOrders();
@@ -320,7 +341,7 @@ async function loadBalance(){
 const STAT={waiting:"Kod bekleniyor",done:"Tamamlandı",cancelled:"İptal edildi"};
 function copy(t){navigator.clipboard.writeText(t).then(()=>toast("Kopyalandı"),()=>toast("Kopyalanamadı"))}
 async function loadOrders(){
-  const {data}=await sb.from("orders").select("*").order("id",{ascending:false}).limit(30);
+  const {data}=await sb.from("orders").select("*").eq("kind",smode==="supply"?"supply":"normal").order("id",{ascending:false}).limit(30);
   const box=$("orders");box.innerHTML="";
   if(!data||!data.length){box.appendChild(mk("div","empty","Henüz sipariş yok. Soldan bir numara al."));return}
   data.forEach(o=>{
@@ -360,8 +381,10 @@ async function poll(){
 /* views */
 let isAdmin=false;
 function view(v){
-  ["buy","dep","adm"].forEach(x=>$("v-"+x).classList.toggle("hide",x!==v));
+  const vv=v==="sup"?"buy":v;
+  ["buy","dep","adm"].forEach(x=>$("v-"+x).classList.toggle("hide",x!==vv));
   document.querySelectorAll("#nav button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v));
+  if(vv==="buy")setSMode(v==="sup"?"supply":"normal");
   if(v==="dep")loadDeps();if(v==="adm")loadAdmin();
 }
 document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>view(b.dataset.v));
@@ -414,6 +437,7 @@ async function loadAdmin(){
     ok.onclick=()=>decide(d.id,true);no.onclick=()=>decide(d.id,false);a.append(ok,no);row.appendChild(a);pd.appendChild(row);
   });
   if(!$("pc").options.length)loadPriceCountries();
+  api({action:"admin_access_get"}).then(x=>{if(x.emails)$("sa").value=x.emails.join("\n")});
   $("mk").value=r.markup;$("ib").value=r.iban;$("ibn").value=r.name;
   const ul=$("ausers");ul.innerHTML="";
   r.users.forEach(u=>{const row=mk("div","meta");row.append(mk("span",null,u.email),mk("b",null,TL(u.balance)));ul.appendChild(row)});
@@ -431,7 +455,7 @@ async function loadPriceCountries(){
 async function loadPrices(){
   if(!$("pc").value){pcData=null;$("plist").textContent="Fiyat girmek için bir ülke seç.";return}
   $("plist").textContent="Yükleniyor…";
-  const r=await api({action:"admin_catalog",country:$("pc").value});
+  const r=await api({action:"admin_catalog",country:$("pc").value,mode:$("pm").value==="s"?"supply":"normal"});
   if(r.error){$("plist").textContent=r.error;return}
   pcData=r.rows;drawPrices();fillNames();
 }
@@ -446,24 +470,30 @@ function drawPrices(){
   rows.slice(0,60).forEach(r=>{
     const d=mk("div","ord"),h=mk("div","oh");
     h.append(mk("b",null,NAMES[r.service]||r.service.toUpperCase()),mk("span","tag","Maliyet "+TL(r.cost)+" · Stok "+r.count));
-    const inp=document.createElement("input");inp.type="text";inp.inputMode="decimal";inp.placeholder="Satış: "+TL(r.effective);
+    const inp=document.createElement("input");inp.type="text";inp.inputMode="decimal";const sup=$("pm").value==="s";inp.placeholder=sup?(r.override==null?"Satılmıyor, fiyat yaz":"Tedarik: "+TL(r.override)):"Satış: "+TL(r.effective);
     if(r.override!=null)inp.value=String(r.override);inp.style.marginTop="8px";
     const a=mk("div","meta"),sv=mk("button","btn sm","Kaydet");
     sv.onclick=async()=>{
       const v=num(inp.value);
       if(!(v>0)){toast("Geçerli bir fiyat yaz");return}
       if(v<r.cost&&!confirm("Satış fiyatı maliyetin altında, zarar edersin. Devam?"))return;
-      const x=await api({action:"admin_price_set",country:$("pc").value,service:r.service,price:v});
+      const x=await api({action:sup?"admin_supply_set":"admin_price_set",country:$("pc").value,service:r.service,price:v});
       toast(x.error||"Fiyat kaydedildi");if(!x.error)loadPrices();
     };
     a.appendChild(sv);
-    if(r.override!=null){const rs=mk("button","btn danger sm","Sıfırla");
-      rs.onclick=async()=>{const x=await api({action:"admin_price_set",country:$("pc").value,service:r.service,reset:true});toast(x.error||"Varsayılana döndü");if(!x.error)loadPrices()};a.appendChild(rs)}
+    if(r.override!=null){const rs=mk("button","btn danger sm",sup?"Satıştan kaldır":"Sıfırla");
+      rs.onclick=async()=>{const x=await api({action:sup?"admin_supply_set":"admin_price_set",country:$("pc").value,service:r.service,reset:true});toast(x.error||"Varsayılana döndü");if(!x.error)loadPrices()};a.appendChild(rs)}
     d.append(h,inp,a);box.appendChild(d);
   });
   if(rows.length>60)box.appendChild(mk("div","sub","İlk 60 servis gösteriliyor, diğerleri için ara."));
 }
-$("pc").onchange=loadPrices;$("pq").oninput=drawPrices;$("ps").oninput=drawPrices;$("so").onchange=drawPrices;
+$("pc").onchange=loadPrices;$("pm").onchange=loadPrices;$("pq").oninput=drawPrices;$("ps").oninput=drawPrices;$("so").onchange=drawPrices;
+
+$("sasave").onclick=async()=>{
+  const emails=$("sa").value.split("\n").map(x=>x.trim()).filter(Boolean);
+  const r=await api({action:"admin_access_set",emails});
+  toast(r.error||(r.count+" e-posta kaydedildi"));
+};
 
 async function loadNames(){
   const {data}=await sb.from("service_names").select("code,name");
@@ -510,7 +540,7 @@ async function show(session){
   clearInterval(pollT);clearInterval(tickT);
   if(!user)return;
   $("av").textContent=(user.email||"?")[0].toUpperCase();
-  api({action:"me"}).then(m=>{isAdmin=!!m.isAdmin;$("admtab").classList.toggle("hide",!isAdmin)});
+  api({action:"me"}).then(m=>{isAdmin=!!m.isAdmin;$("admtab").classList.toggle("hide",!isAdmin);$("suptab").classList.toggle("hide",!m.supply)});
   await loadNames();await loadBalance();await loadOrders();
   if(!catalog){drawServices();loadCatalog()}
   pollT=setInterval(poll,5000);tickT=setInterval(tick,1000);
