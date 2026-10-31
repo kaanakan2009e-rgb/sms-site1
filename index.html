@@ -252,10 +252,23 @@ $("go").onclick=async()=>{
 $("out").onclick=()=>sb.auth.signOut();
 
 /* catalog */
+let catBusy=false;
 async function loadCatalog(){
+  if(catBusy)return;catBusy=true;
+  if(!catalog){
+    try{const c=localStorage.getItem("cat1");if(c){catalog=JSON.parse(c);drawCountries();drawServices();upd()}}catch(e){}
+  }
+  if(!catalog){const l=mk("div","sub","Ülkeler yükleniyor…");l.style.padding="12px";$("cty").replaceChildren(l)}
   const r=await api({action:"catalog"});
-  if(r.error){toast(r.error);return}
-  catalog=r;drawCountries();
+  catBusy=false;
+  if(r.error){
+    toast(r.error);
+    if(!catalog){const b=mk("button","btn sm","Tekrar dene");b.style.margin="12px";b.onclick=loadCatalog;$("cty").replaceChildren(mk("div","sub",r.error),b)}
+    return;
+  }
+  catalog=r;
+  try{localStorage.setItem("cat1",JSON.stringify(r))}catch(e){}
+  drawCountries();drawServices();upd();
 }
 function drawCountries(){
   const q=$("cs").value.toLowerCase(),box=$("cty");box.innerHTML="";
