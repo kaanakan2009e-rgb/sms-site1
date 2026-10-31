@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>SMS Onay</title>
+<style>
+:root{--bg:#f4f5f8;--card:#fff;--ink:#141a2e;--mute:#667088;--line:#e1e5ee;--acc:#2447d6;--accsoft:#e8edff;--accfg:#fff;--ok:#12805c;--oksoft:#dff5ec;--warn:#9a5b00;--warnsoft:#fdf0d5;--bad:#c0322b;--badsoft:#fde6e4;--sh:0 1px 2px rgba(20,26,46,.06),0 4px 16px rgba(20,26,46,.05)}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1120;--card:#161c33;--ink:#e9ecf6;--mute:#8f9ab5;--line:#262e4d;--acc:#6f8bff;--accsoft:#222c57;--accfg:#0d1120;--ok:#5fd6a6;--oksoft:#12362b;--warn:#f0b955;--warnsoft:#3a2d12;--bad:#ff918a;--badsoft:#3d1c1a;--sh:none}}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:env(safe-area-inset-bottom)}
+.hide{display:none!important}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--acc);outline-offset:2px}
+.btn{border:1px solid var(--acc);background:var(--acc);color:var(--accfg);font-weight:600;padding:11px 18px;border-radius:9px;min-height:44px;transition:filter .15s}
+.btn:hover{filter:brightness(1.08)}.btn:disabled{opacity:.5;cursor:default}
+.btn.ghost{background:transparent;color:var(--acc)}
+.btn.sm{padding:6px 12px;min-height:34px;font-size:14px}
+.btn.danger{border-color:var(--bad);color:var(--bad);background:transparent}
+input[type=text],input[type=email],input[type=password]{width:100%;padding:12px 14px;background:var(--bg);border:1px solid var(--line);border-radius:9px;min-height:46px}
+label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px}
+.mute{color:var(--mute)}
+/* header */
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding:calc(env(safe-area-inset-top) + 10px) 16px 10px}
+.bar{max-width:1040px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:17px;letter-spacing:-.01em;margin-right:auto}
+.logo{width:30px;height:30px;border-radius:8px;background:var(--acc);display:grid;place-items:center}
+.pill{background:var(--accsoft);color:var(--acc);font-weight:700;padding:7px 13px;border-radius:99px;font-variant-numeric:tabular-nums}
+.av{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:var(--bg);font-weight:700;display:grid;place-items:center}
+/* layout */
+main{max-width:1040px;margin:0 auto;padding:18px 16px 40px}
+.grid{display:grid;gap:16px;grid-template-columns:1fr}
+@media(min-width:860px){.grid{grid-template-columns:420px 1fr;align-items:start}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:var(--sh)}
+.card h2{font-size:16px;margin:0 0 4px}
+.sub{font-size:13px;color:var(--mute);margin:0 0 4px}
+/* login */
+.login{max-width:400px;margin:8vh auto 0}
+.login h1{font-size:26px;letter-spacing:-.02em;margin:14px 0 4px}
+.tabs{display:flex;background:var(--bg);border-radius:10px;padding:4px;margin:18px 0 4px}
+.tabs button{flex:1;border:0;background:transparent;padding:9px;border-radius:7px;font-weight:600;color:var(--mute)}
+.tabs button[aria-selected=true]{background:var(--card);color:var(--ink);box-shadow:var(--sh)}
+/* buy */
+.list{max-height:210px;overflow:auto;border:1px solid var(--line);border-radius:9px;margin-top:8px}
+.list button{display:flex;justify-content:space-between;width:100%;border:0;border-bottom:1px solid var(--line);background:transparent;padding:11px 12px;text-align:left;min-height:44px}
+.list button:last-child{border-bottom:0}
+.list button[aria-pressed=true]{background:var(--accsoft);color:var(--acc);font-weight:600}
+.chips{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px;margin-top:8px;max-height:230px;overflow:auto}
+.chip{border:1px solid var(--line);background:transparent;border-radius:9px;padding:9px 10px;text-align:left}
+.chip b{display:block;font-size:14px}.chip span{font-size:12px;color:var(--mute)}
+.chip[aria-pressed=true]{border-color:var(--acc);background:var(--accsoft)}
+.total{display:flex;justify-content:space-between;align-items:center;margin-top:16px;gap:12px}
+.total .p{font-size:22px;font-weight:800;letter-spacing:-.02em}
+/* orders */
+.ord{border:1px solid var(--line);border-radius:12px;padding:14px;margin-top:12px}
+.oh{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.badge{font-size:12px;font-weight:700;padding:4px 10px;border-radius:99px}
+.b-waiting{background:var(--warnsoft);color:var(--warn)}.b-done{background:var(--oksoft);color:var(--ok)}.b-cancelled{background:var(--badsoft);color:var(--bad)}
+.phone{font-size:21px;font-weight:700;letter-spacing:.01em;margin:8px 0 2px;font-variant-numeric:tabular-nums}
+.codebox{display:flex;align-items:center;justify-content:space-between;background:var(--oksoft);color:var(--ok);border-radius:10px;padding:10px 14px;margin-top:10px}
+.codebox b{font-size:28px;letter-spacing:.14em}
+.meta{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:13px;color:var(--mute);gap:8px}
+.empty{text-align:center;padding:28px 8px;color:var(--mute)}
+.toast{position:fixed;left:50%;bottom:calc(env(safe-area-inset-bottom) + 18px);transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:10px;font-weight:600;max-width:92vw;z-index:20;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+@media(prefers-reduced-motion:no-preference){.btn,.chip{transition:all .15s}}
+</style>
+</head>
+<body>
+
+<section id="auth" class="hide">
+<main><div class="card login">
+  <div class="logo"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></div>
+  <h1>SMS Onay</h1>
+  <p class="sub">Sanal numara al, doğrulama kodunu anında gör. Kod gelmezse ücret alınmaz.</p>
+  <div class="tabs" role="tablist"><button id="t-in" role="tab" aria-selected="true">Giriş yap</button><button id="t-up" role="tab" aria-selected="false">Kayıt ol</button></div>
+  <label for="em">E-posta</label><input id="em" type="email" autocomplete="email">
+  <label for="pw">Şifre</label><input id="pw" type="password" autocomplete="current-password" placeholder="En az 6 karakter">
+  <button class="btn" id="go" style="width:100%;margin-top:18px">Giriş yap</button>
+  <p class="sub" id="amsg" role="status" style="margin-top:12px;min-height:20px"></p>
+</div></main>
+</section>
+
+<section id="app" class="hide">
+<header><div class="bar">
+  <div class="brand"><div class="logo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></div>SMS Onay</div>
+  <div class="pill" id="bal">–</div>
+  <div class="av" id="av" aria-hidden="true"></div>
+  <button class="btn ghost sm" id="out">Çıkış</button>
+</div></header>
+<main><div class="grid">
+  <div class="card">
+    <h2>Numara al</h2><p class="sub">Ülkeyi ve servisi seç.</p>
+    <label for="cs">Ülke</label>
+    <input id="cs" type="text" placeholder="Ülke ara…" autocomplete="off">
+    <div class="list" id="cty" role="group" aria-label="Ülkeler"></div>
+    <label for="ss">Servis</label>
+    <input id="ss" type="text" placeholder="Servis ara…" autocomplete="off">
+    <div class="chips" id="svc" role="group" aria-label="Servisler"></div>
+    <div class="total"><div><div class="sub" style="margin:0">Ödenecek tutar</div><div class="p" id="price">–</div></div><button class="btn" id="buy" disabled>Numara al</button></div>
+  </div>
+  <div class="card">
+    <h2>Siparişlerim</h2><p class="sub">Kod gelince burada otomatik görünür.</p>
+    <div id="orders"></div>
+  </div>
+</div></main>
+</section>
+<div id="toast" class="toast hide" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+const SB_URL="https://hnrugvzzfqhhkmnljdhy.supabase.co";
+const SB_KEY="sb_publishable_covZ3l69V0EdSq2E73ARAQ_NnAPGS1E";
+const sb=supabase.createClient(SB_URL,SB_KEY);
+const $=id=>document.getElementById(id);
+const TL=n=>Number(n).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})+" ₺";
+const NAMES={wa:"WhatsApp"};
+let catalog=null,user=null,pollT=null,tickT=null,mode="in",selC=null,selS=null,busy=false;
+
+function toast(t){const e=$("toast");e.textContent=t;e.classList.remove("hide");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.add("hide"),3500)}
+function mk(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+
+async function api(body){
+  const {data:{session}}=await sb.auth.getSession();
+  if(!session)return{error:"Oturum yok"};
+  try{
+    const r=await fetch(SB_URL+"/functions/v1/sms",{method:"POST",headers:{"Content-Type":"application/json",apikey:SB_KEY,Authorization:"Bearer "+session.access_token},body:JSON.stringify(body)});
+    return await r.json();
+  }catch(e){return{error:"Bağlantı hatası, tekrar dene"}}
+}
+
+/* auth */
+function setMode(m){mode=m;$("t-in").setAttribute("aria-selected",m==="in");$("t-up").setAttribute("aria-selected",m==="up");$("go").textContent=m==="in"?"Giriş yap":"Hesap oluştur";$("amsg").textContent=""}
+$("t-in").onclick=()=>setMode("in");$("t-up").onclick=()=>setMode("up");
+$("go").onclick=async()=>{
+  $("amsg").textContent="";$("amsg").style.color="";
+  const email=$("em").value.trim(),password=$("pw").value;
+  if(!email||password.length<6){$("amsg").style.color="var(--bad)";$("amsg").textContent="E-posta ve en az 6 karakterli şifre gir.";return}
+  $("go").disabled=true;
+  const {error,data}=mode==="in"?await sb.auth.signInWithPassword({email,password}):await sb.auth.signUp({email,password});
+  $("go").disabled=false;
+  if(error){$("amsg").style.color="var(--bad)";$("amsg").textContent=error.message;return}
+  if(mode==="up"&&!data.session){$("amsg").style.color="var(--ok)";$("amsg").textContent="Kayıt tamam. E-postana gelen bağlantıya tıkla, sonra giriş yap."}
+};
+$("out").onclick=()=>sb.auth.signOut();
+
+/* catalog */
+async function loadCatalog(){
+  const r=await api({action:"catalog"});
+  if(r.error){toast(r.error);return}
+  catalog=r;drawCountries();
+}
+function drawCountries(){
+  const q=$("cs").value.toLowerCase(),box=$("cty");box.innerHTML="";
+  Object.keys(catalog.prices).filter(id=>catalog.countries[id]&&catalog.countries[id].eng.toLowerCase().includes(q)).forEach(id=>{
+    const b=mk("button",null,catalog.countries[id].eng);b.type="button";b.setAttribute("aria-pressed",id===selC);
+    b.onclick=()=>{selC=id;selS=null;drawCountries();drawServices();upd()};box.appendChild(b);
+  });
+  if(!box.children.length)box.appendChild(mk("div","empty","Ülke bulunamadı"));
+}
+function drawServices(){
+  const box=$("svc");box.innerHTML="";
+  if(!selC){box.appendChild(mk("div","sub","Önce ülke seç."));return}
+  const q=$("ss").value.toLowerCase(),list=catalog.prices[selC]||{};
+  Object.keys(list).filter(s=>(NAMES[s]||s).toLowerCase().includes(q)).forEach(s=>{
+    const b=mk("button","chip");b.type="button";b.setAttribute("aria-pressed",s===selS);
+    b.append(mk("b",null,NAMES[s]||s.toUpperCase()),mk("span",null,TL(list[s].cost)));
+    b.onclick=()=>{selS=s;drawServices();upd()};box.appendChild(b);
+  });
+}
+function upd(){
+  const p=selC&&selS&&catalog.prices[selC]?.[selS];
+  $("price").textContent=p?TL(p.cost):"–";$("buy").disabled=!p||busy;
+}
+$("cs").oninput=()=>catalog&&drawCountries();$("ss").oninput=()=>catalog&&drawServices();
+$("buy").onclick=async()=>{
+  busy=true;upd();$("buy").textContent="Alınıyor…";
+  const r=await api({action:"buy",service:selS,country:selC});
+  busy=false;$("buy").textContent="Numara al";upd();
+  if(r.error)toast(r.error);else toast("Numara alındı. Kodu bekle.");
+  await loadBalance();await loadOrders();
+};
+
+/* balance + orders */
+async function loadBalance(){
+  const {data}=await sb.from("profiles").select("balance").eq("id",user.id).single();
+  $("bal").textContent=data?TL(data.balance):"–";
+}
+const STAT={waiting:"Kod bekleniyor",done:"Tamamlandı",cancelled:"İptal edildi"};
+function copy(t){navigator.clipboard.writeText(t).then(()=>toast("Kopyalandı"),()=>toast("Kopyalanamadı"))}
+async function loadOrders(){
+  const {data}=await sb.from("orders").select("*").order("id",{ascending:false}).limit(30);
+  const box=$("orders");box.innerHTML="";
+  if(!data||!data.length){box.appendChild(mk("div","empty","Henüz sipariş yok. Soldan bir numara al."));return}
+  data.forEach(o=>{
+    const d=mk("div","ord"),h=mk("div","oh");
+    h.append(mk("b",null,(NAMES[o.service]||o.service.toUpperCase())+" · "+TL(o.price)),mk("span","badge b-"+o.status,STAT[o.status]));
+    d.appendChild(h);
+    const ph=mk("div","phone","+"+o.phone);d.appendChild(ph);
+    if(o.code){const c=mk("div","codebox");c.append(mk("b",null,o.code));const b=mk("button","btn sm","Kopyala");b.onclick=()=>copy(o.code);c.appendChild(b);d.appendChild(c)}
+    const m=mk("div","meta");
+    const l=mk("span",null,o.status==="waiting"?"":new Date(o.created_at).toLocaleString("tr-TR"));
+    if(o.status==="waiting"&&o.end_time){l.dataset.end=o.end_time}
+    m.appendChild(l);
+    const a=mk("span");
+    const cp=mk("button","btn ghost sm","Numarayı kopyala");cp.onclick=()=>copy(o.phone);a.appendChild(cp);
+    if(o.status==="waiting"){const x=mk("button","btn danger sm","İptal et");x.style.marginLeft="6px";
+      x.onclick=async()=>{x.disabled=true;const r=await api({action:"cancel",orderId:o.id});if(r.error)toast(r.error);else toast("İptal edildi, bakiye iade edildi");await loadBalance();await loadOrders()};a.appendChild(x)}
+    m.appendChild(a);d.appendChild(m);box.appendChild(d);
+  });
+  tick();
+}
+function tick(){
+  document.querySelectorAll("[data-end]").forEach(e=>{
+    const s=Math.max(0,Math.floor((new Date(e.dataset.end)-Date.now())/1000));
+    e.textContent="Kalan süre "+Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+  });
+}
+async function poll(){
+  const {data}=await sb.from("orders").select("id").eq("status","waiting");
+  if(data&&data.length){
+    let done=false;
+    for(const o of data){const r=await api({action:"check",orderId:o.id});if(r.order&&r.order.status==="done")done=true}
+    if(done)toast("Kod geldi");
+    await loadBalance();await loadOrders();
+  }
+}
+
+async function show(session){
+  user=session?session.user:null;
+  $("auth").classList.toggle("hide",!!user);$("app").classList.toggle("hide",!user);
+  clearInterval(pollT);clearInterval(tickT);
+  if(!user)return;
+  $("av").textContent=(user.email||"?")[0].toUpperCase();
+  await loadBalance();await loadOrders();
+  if(!catalog){drawServices();loadCatalog()}
+  pollT=setInterval(poll,5000);tickT=setInterval(tick,1000);
+}
+sb.auth.onAuthStateChange((_e,s)=>setTimeout(()=>show(s),0));
+sb.auth.getSession().then(({data})=>show(data.session));
+</script>
+</body>
+</html>
