@@ -256,31 +256,42 @@ let catBusy=false;
 async function loadCatalog(){
   if(catBusy)return;catBusy=true;
   if(!catalog){
-    try{const c=localStorage.getItem("cat1");if(c){catalog=JSON.parse(c);drawCountries();drawServices();upd()}}catch(e){}
+    try{const c=localStorage.getItem("cty1");if(c){catalog={countries:JSON.parse(c),prices:{},loaded:{}};drawCountries()}}catch(e){}
   }
   if(!catalog){const l=mk("div","sub","Ülkeler yükleniyor…");l.style.padding="12px";$("cty").replaceChildren(l)}
-  const r=await api({action:"catalog"});
+  const r=await api({action:"catalog",service:"wa"});
   catBusy=false;
   if(r.error){
     toast(r.error);
-    if(!catalog){const b=mk("button","btn sm","Tekrar dene");b.style.margin="12px";b.onclick=loadCatalog;$("cty").replaceChildren(mk("div","sub",r.error),b)}
+    if(!catalog){const bt=mk("button","btn sm","Tekrar dene");bt.style.margin="12px";bt.onclick=loadCatalog;$("cty").replaceChildren(mk("div","sub",r.error),bt)}
     return;
   }
-  catalog=r;
-  try{localStorage.setItem("cat1",JSON.stringify(r))}catch(e){}
-  drawCountries();drawServices();upd();
+  if(!catalog)catalog={countries:{},prices:{},loaded:{}};
+  catalog.countries=r.countries;
+  try{localStorage.setItem("cty1",JSON.stringify(r.countries))}catch(e){}
+  drawCountries();
+}
+async function pickCountry(id){
+  selC=id;selS=null;drawCountries();drawServices();upd();
+  if(catalog.loaded[id])return;
+  const r=await api({action:"catalog",country:id});
+  if(selC!==id&&!r.prices)return;
+  if(r.error){toast(r.error);if(selC===id){$("svc").replaceChildren(mk("div","sub",r.error))}return}
+  catalog.prices[id]=(r.prices&&r.prices[id])||{};catalog.loaded[id]=true;
+  if(selC===id){drawServices();upd()}
 }
 function drawCountries(){
   const q=$("cs").value.toLowerCase(),box=$("cty");box.innerHTML="";
-  Object.keys(catalog.prices).filter(id=>catalog.countries[id]&&catalog.countries[id].eng.toLowerCase().includes(q)).forEach(id=>{
+  Object.keys(catalog.countries).filter(id=>catalog.countries[id].eng.toLowerCase().includes(q)).sort((x,y)=>catalog.countries[x].eng.localeCompare(catalog.countries[y].eng)).forEach(id=>{
     const b=mk("button",null,catalog.countries[id].eng);b.type="button";b.setAttribute("aria-pressed",id===selC);
-    b.onclick=()=>{selC=id;selS=null;drawCountries();drawServices();upd()};box.appendChild(b);
+    b.onclick=()=>pickCountry(id);box.appendChild(b);
   });
   if(!box.children.length)box.appendChild(mk("div","empty","Ülke bulunamadı"));
 }
 function drawServices(){
   const box=$("svc");box.innerHTML="";
   if(!selC){box.appendChild(mk("div","sub","Önce ülke seç."));return}
+  if(!catalog.loaded[selC]){box.appendChild(mk("div","sub","Servisler yükleniyor…"));return}
   const q=$("ss").value.toLowerCase(),list=catalog.prices[selC]||{};
   Object.keys(list).filter(s=>(NAMES[s]||s).toLowerCase().includes(q)).forEach(s=>{
     const b=mk("button","chip");b.type="button";b.setAttribute("aria-pressed",s===selS);
@@ -412,11 +423,13 @@ async function loadPriceCountries(){
   const r=await api({action:"admin_catalog"});
   if(r.error){toast(r.error);return}
   const sel=$("pc");sel.innerHTML="";
-  const all=mk("option",null,"Tüm ülkeler (varsayılan)");all.value="*";sel.appendChild(all);
+  const ph=mk("option",null,"Ülke seç…");ph.value="";sel.appendChild(ph);
+  const all=mk("option",null,"Tüm ülkeler (varsayılan, yavaş yüklenir)");all.value="*";sel.appendChild(all);
   Object.values(r.countries).sort((x,y)=>x.eng.localeCompare(y.eng)).forEach(c=>{const o=mk("option",null,c.eng);o.value=c.id;sel.appendChild(o)});
   loadPrices();
 }
 async function loadPrices(){
+  if(!$("pc").value){pcData=null;$("plist").textContent="Fiyat girmek için bir ülke seç.";return}
   $("plist").textContent="Yükleniyor…";
   const r=await api({action:"admin_catalog",country:$("pc").value});
   if(r.error){$("plist").textContent=r.error;return}
