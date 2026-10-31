@@ -19,6 +19,7 @@ button{cursor:pointer}
 .btn.ghost{background:transparent;color:var(--acc)}
 .btn.sm{padding:6px 12px;min-height:34px;font-size:14px}
 .btn.danger{border-color:var(--bad);color:var(--bad);background:transparent}
+select{width:100%;padding:12px 14px;background:var(--bg);border:1px solid var(--line);border-radius:9px;min-height:46px}
 input[type=text],input[type=email],input[type=password],input[type=number]{width:100%;padding:12px 14px;background:var(--bg);border:1px solid var(--line);border-radius:9px;min-height:46px}
 label{display:block;font-size:13px;font-weight:600;margin:14px 0 6px}
 .mute{color:var(--mute)}
@@ -131,10 +132,15 @@ main{max-width:1040px;margin:0 auto;padding:18px 16px 40px}
     <label for="aa">Tutar (₺). Çıkarmak için eksi yaz: -10</label><input id="aa" type="text" inputmode="text" placeholder="25 veya -10">
     <button class="btn" id="aadj" style="margin-top:14px">Uygula</button></div>
   <div class="card"><h2>Ayarlar</h2>
-    <label for="mk">Kâr marjı (%)</label><input id="mk" type="number" inputmode="decimal">
+    <label for="mk">Varsayılan kâr marjı (%), özel fiyat girmediğin servisler için</label><input id="mk" type="number" inputmode="decimal">
     <label for="ibn">IBAN sahibi adı</label><input id="ibn" type="text">
     <label for="ib">IBAN</label><input id="ib" type="text">
     <button class="btn" id="aset" style="margin-top:14px">Kaydet</button></div>
+  <div class="card"><h2>Satış fiyatları</h2>
+    <p class="sub">Servis için kendi satış fiyatını yaz. "Tüm ülkeler" seçersen fiyat o servisin her ülkesinde geçerli olur; tek ülke için girdiğin fiyat onu geçersiz kılar. Boş bıraktığın servis varsayılan marjla satılır.</p>
+    <label for="pc">Ülke</label><select id="pc"></select>
+    <label for="pq">Servis ara</label><input id="pq" type="text" placeholder="Örn. wa" autocomplete="off">
+    <div id="plist" style="margin-top:8px"></div></div>
   <div class="card"><h2>Kullanıcılar</h2><div id="ausers"></div></div>
 </div>
 </main>
@@ -315,10 +321,54 @@ async function loadAdmin(){
     const a=mk("div","meta"),ok=mk("button","btn sm","Onayla"),no=mk("button","btn danger sm","Reddet");
     ok.onclick=()=>decide(d.id,true);no.onclick=()=>decide(d.id,false);a.append(ok,no);row.appendChild(a);pd.appendChild(row);
   });
+  if(!$("pc").options.length)loadPriceCountries();
   $("mk").value=r.markup;$("ib").value=r.iban;$("ibn").value=r.name;
   const ul=$("ausers");ul.innerHTML="";
   r.users.forEach(u=>{const row=mk("div","meta");row.append(mk("span",null,u.email),mk("b",null,TL(u.balance)));ul.appendChild(row)});
 }
+let pcData=null;
+async function loadPriceCountries(){
+  const r=await api({action:"admin_catalog"});
+  if(r.error){toast(r.error);return}
+  const sel=$("pc");sel.innerHTML="";
+  const all=mk("option",null,"Tüm ülkeler (varsayılan)");all.value="*";sel.appendChild(all);
+  Object.values(r.countries).sort((x,y)=>x.eng.localeCompare(y.eng)).forEach(c=>{const o=mk("option",null,c.eng);o.value=c.id;sel.appendChild(o)});
+  loadPrices();
+}
+async function loadPrices(){
+  $("plist").textContent="Yükleniyor…";
+  const r=await api({action:"admin_catalog",country:$("pc").value});
+  if(r.error){$("plist").textContent=r.error;return}
+  pcData=r.rows;drawPrices();
+}
+function drawPrices(){
+  const box=$("plist");box.innerHTML="";
+  if(!pcData)return;
+  const q=$("pq").value.toLowerCase();
+  const rows=pcData.filter(r=>(NAMES[r.service]||r.service).toLowerCase().includes(q));
+  if(!rows.length){box.appendChild(mk("div","empty","Servis bulunamadı"));return}
+  rows.slice(0,60).forEach(r=>{
+    const d=mk("div","ord"),h=mk("div","oh");
+    h.append(mk("b",null,NAMES[r.service]||r.service.toUpperCase()),mk("span","tag","Maliyet "+TL(r.cost)+" · Stok "+r.count));
+    const inp=document.createElement("input");inp.type="text";inp.inputMode="decimal";inp.placeholder="Satış: "+TL(r.effective);
+    if(r.override!=null)inp.value=String(r.override);inp.style.marginTop="8px";
+    const a=mk("div","meta"),sv=mk("button","btn sm","Kaydet");
+    sv.onclick=async()=>{
+      const v=num(inp.value);
+      if(!(v>0)){toast("Geçerli bir fiyat yaz");return}
+      if(v<r.cost&&!confirm("Satış fiyatı maliyetin altında, zarar edersin. Devam?"))return;
+      const x=await api({action:"admin_price_set",country:$("pc").value,service:r.service,price:v});
+      toast(x.error||"Fiyat kaydedildi");if(!x.error)loadPrices();
+    };
+    a.appendChild(sv);
+    if(r.override!=null){const rs=mk("button","btn danger sm","Sıfırla");
+      rs.onclick=async()=>{const x=await api({action:"admin_price_set",country:$("pc").value,service:r.service,reset:true});toast(x.error||"Varsayılana döndü");if(!x.error)loadPrices()};a.appendChild(rs)}
+    d.append(h,inp,a);box.appendChild(d);
+  });
+  if(rows.length>60)box.appendChild(mk("div","sub","İlk 60 servis gösteriliyor, diğerleri için ara."));
+}
+$("pc").onchange=loadPrices;$("pq").oninput=drawPrices;
+
 async function decide(id,approve){
   const r=await api({action:"admin_deposit",id,approve});
   toast(r.error||(approve?"Onaylandı, bakiye eklendi":"Reddedildi"));loadAdmin();
