@@ -97,6 +97,18 @@ main{max-width:1040px;margin:0 auto;padding:18px 16px 40px}
 .faq summary{cursor:pointer;font-weight:600;min-height:24px}
 .faq p{margin:10px 0 0;color:var(--mute)}
 .foot{text-align:center;color:var(--mute);font-size:13px;padding:24px 16px 32px}
+.subnav{display:flex;gap:4px;overflow-x:auto;padding:6px 0 0;margin-bottom:12px;position:sticky;top:calc(env(safe-area-inset-top) + 58px);background:var(--bg);z-index:4;border-bottom:1px solid var(--line)}
+.subnav button{border:0;border-bottom:3px solid transparent;background:transparent;padding:9px 14px;font-weight:600;color:var(--mute);white-space:nowrap;border-radius:0}
+.subnav button[aria-selected=true]{color:var(--acc);border-bottom-color:var(--acc)}
+.subnav.mini{position:static;border:0;padding:0;gap:8px}
+.subnav.mini button{border:1px solid var(--line);background:var(--card);border-radius:99px;padding:7px 14px}
+.subnav.mini button[aria-selected=true]{background:var(--acc);border-color:var(--acc);color:var(--accfg)}
+.cnt{background:var(--bad);color:#fff;border-radius:99px;font-size:12px;padding:1px 7px;margin-left:6px}
+.cnt:empty{display:none}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-top:10px}
+.tile{background:var(--bg);border-radius:10px;padding:12px}
+.tile .v{font-size:20px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.tile .l{font-size:12px;color:var(--mute)}
 a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;text-align:center}
 .support{margin-top:16px;padding:14px;border:1px dashed var(--line);border-radius:10px}
 .support p{margin:0 0 10px;font-size:14px;color:var(--mute)}
@@ -125,6 +137,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
       <h2>Hesabına giriş yap</h2>
       <div class="tabs" role="tablist"><button id="t-in" role="tab" aria-selected="true">Giriş yap</button><button id="t-up" role="tab" aria-selected="false">Kayıt ol</button></div>
       <label for="em">E-posta</label><input id="em" type="email" autocomplete="email">
+      <div id="rfw" class="hide"><label for="rf">Referans kodu (isteğe bağlı)</label><input id="rf" type="text" autocomplete="off" autocapitalize="characters" maxlength="12"></div>
       <label for="pw">Şifre</label><input id="pw" type="password" autocomplete="current-password" placeholder="En az 6 karakter">
       <button class="btn" id="go" style="width:100%;margin-top:18px">Giriş yap</button>
       <p class="sub" id="amsg" role="status" style="margin-top:12px;min-height:20px"></p>
@@ -156,10 +169,11 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
   <div class="av" id="av" aria-hidden="true"></div>
   <button class="btn ghost sm" id="out">Çıkış</button>
 </div></header>
-<nav class="nav" id="nav"><button data-v="buy" aria-selected="true">Numara al</button><button data-v="sup" id="suptab" class="hide" aria-selected="false">Tedarik</button><button data-v="dep" aria-selected="false">Bakiye yükle</button><button data-v="adm" id="admtab" class="hide" aria-selected="false">Admin</button></nav>
+<nav class="nav" id="nav"><button data-v="buy" aria-selected="true">Numara al</button><button data-v="sup" id="suptab" class="hide" aria-selected="false">Tedarik</button><button data-v="dep" aria-selected="false">Bakiye yükle</button><button data-v="ref" aria-selected="false">Referans</button><button data-v="adm" id="admtab" class="hide" aria-selected="false">Admin</button></nav>
 <main><div id="v-buy" class="grid">
   <div class="card">
     <h2 id="bh">Numara al</h2><p class="sub">Ülkeyi ve servisi seç.</p>
+    <div class="bank hide" id="rbanner" style="margin:10px 0 0"></div>
     <label for="cs">Ülke</label>
     <input id="cs" type="text" placeholder="Ülke ara…" autocomplete="off">
     <div class="list" id="cty" role="group" aria-label="Ülkeler"></div>
@@ -184,40 +198,89 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 </div>
 <div class="card"><h2>Taleplerim</h2><div id="deplist"></div></div></div>
 
+<div id="v-ref" class="hide stack"><div class="card">
+  <h2>Referans programı</h2><p class="sub" id="rrule"></p>
+  <label>Referans kodun</label><div class="bank"><b id="rcode">–</b></div>
+  <label>Davet bağlantın</label><div class="bank"><span id="rlink" style="font-size:14px">–</span></div>
+  <div class="row"><button class="btn ghost sm" id="rcp1">Kodu kopyala</button><button class="btn ghost sm" id="rcp2">Bağlantıyı kopyala</button></div>
+  <button class="btn" id="rwa" style="width:100%;margin-top:10px">WhatsApp’ta paylaş</button>
+  <p class="sub" id="rstat" style="margin-top:14px"></p>
+</div></div>
+
 <div id="v-adm" class="hide stack">
-  <div class="card"><h2>Özet</h2><p class="sub" id="ast">–</p></div>
-  <div class="card"><h2>Bekleyen yüklemeler</h2><div id="apend"></div></div>
-  <div class="card"><h2>Bakiye düzelt</h2>
-    <label for="ae">Kullanıcı e-postası</label><input id="ae" type="email">
-    <label for="aa">Tutar (₺). Çıkarmak için eksi yaz: -10</label><input id="aa" type="text" inputmode="text" placeholder="25 veya -10">
-    <button class="btn" id="aadj" style="margin-top:14px">Uygula</button></div>
-  <div class="card"><h2>Ayarlar</h2>
-    <label for="mk">Varsayılan kâr marjı (%), özel fiyat girmediğin servisler için</label><input id="mk" type="number" inputmode="decimal">
-    <label for="ibn">IBAN sahibi adı</label><input id="ibn" type="text">
-    <label for="ib">IBAN</label><input id="ib" type="text">
-    <button class="btn" id="aset" style="margin-top:14px">Kaydet</button></div>
-  <div class="card"><h2>Tedarik ürünleri</h2>
-    <p class="sub">Tedarik menüsünde satılan ülke ve servisler. Buradan kaldırabilirsin. Yeni eklemek için aşağıdaki düğmeye bas.</p>
-    <div id="slist"></div>
-    <button class="btn" id="sadd" style="margin-top:14px;width:100%">+ Ülke ve servis ekle</button></div>
-  <div class="card"><h2>Satış fiyatları</h2>
-    <p class="sub">Servis için kendi satış fiyatını yaz. "Tüm ülkeler" seçersen fiyat o servisin her ülkesinde geçerli olur; tek ülke için girdiğin fiyat onu geçersiz kılar. Boş bıraktığın servis varsayılan marjla satılır.</p>
-    <label for="pm">Hangi fiyatı düzenliyorsun?</label><select id="pm"><option value="n">Normal satış fiyatı</option><option value="s">Tedarik ürünleri (ekle ve fiyatla)</option></select>
-    <p class="sub hide" id="phint" style="margin-top:8px">Tedarik modu: ülkeyi seç, satmak istediğin servise fiyat yazıp Kaydet de. Fiyat yazdığın servis tedarik menüsüne eklenir.</p>
-    <label for="pc">Ülke</label><select id="pc"></select>
-    <label for="pq">Servis ara</label><input id="pq" type="text" placeholder="Ad veya kod, örn. wa" autocomplete="off">
-    <label for="ps">En az stok</label><input id="ps" type="number" inputmode="numeric" min="0" placeholder="Örn. 100">
-    <label for="so">Sırala</label><select id="so"><option value="n">Ada göre</option><option value="s">Stok (çoktan aza)</option><option value="c">Maliyet (düşükten yükseğe)</option></select>
-    <div id="plist" style="margin-top:8px"></div></div>
-  <div class="card"><h2>Servis adları</h2>
-    <p class="sub">Her satıra bir servis yaz: kod=Ad (örn. wa=WhatsApp). Adı boş olan satırlar atlanır. Servis kodlarını Turonay’ın fiyatlar sayfasında görebilirsin.</p>
-    <textarea id="nt" rows="10" spellcheck="false" autocapitalize="off"></textarea>
-    <button class="btn" id="nsave" style="margin-top:14px">Adları kaydet</button></div>
-  <div class="card"><h2>Tedarik erişimi</h2>
-    <p class="sub">Tedarik menüsünü sadece buraya yazdığın e-postalar görebilir. Her satıra bir e-posta yaz.</p>
-    <textarea id="sa" rows="6" spellcheck="false" autocapitalize="off"></textarea>
-    <button class="btn" id="sasave" style="margin-top:14px">Erişimi kaydet</button></div>
-  <div class="card"><h2>Kullanıcılar</h2><div id="ausers"></div></div>
+  <div class="subnav" id="anav" role="tablist">
+    <button data-a="ov" aria-selected="true">Özet</button>
+    <button data-a="dp" aria-selected="false">Yüklemeler<span class="cnt" id="pbad"></span></button>
+    <button data-a="pr" aria-selected="false">Fiyatlar</button>
+    <button data-a="su" aria-selected="false">Tedarik</button>
+    <button data-a="us" aria-selected="false">Kullanıcılar</button>
+    <button data-a="st" aria-selected="false">Ayarlar</button>
+  </div>
+
+  <div class="apanel" id="a-ov">
+    <div class="card"><h2>Özet</h2><div class="tiles" id="ast"></div></div>
+  </div>
+
+  <div class="apanel hide" id="a-dp">
+    <div class="card"><h2>Bekleyen yüklemeler</h2><div id="apend"></div></div>
+  </div>
+
+  <div class="apanel hide" id="a-pr">
+    <div class="subnav mini" data-panels="pr-1,pr-2"><button data-m="pr-1" aria-selected="true">Fiyat listesi</button><button data-m="pr-2" aria-selected="false">Servis adları</button></div>
+    <div id="pr-1"><div id="pslot">
+      <div class="card" id="ecard"><h2 id="eh">Satış fiyatları</h2>
+        <p class="sub" id="ehint">Servis için kendi satış fiyatını yaz. “Tüm ülkeler” seçersen fiyat o servisin her ülkesinde geçerli olur; tek ülke için girdiğin fiyat onu geçersiz kılar. Boş bıraktığın servis varsayılan marjla satılır.</p>
+        <div class="hide" id="pmw"><select id="pm"><option value="n">Normal satış fiyatı</option><option value="s">Tedarik ürünleri</option></select><p class="sub hide" id="phint"></p></div>
+        <label for="pc">Ülke</label><select id="pc"></select>
+        <label for="pq">Servis ara</label><input id="pq" type="text" placeholder="Ad veya kod, örn. wa" autocomplete="off">
+        <label for="ps">En az stok</label><input id="ps" type="number" inputmode="numeric" min="0" placeholder="Örn. 100">
+        <label for="so">Sırala</label><select id="so"><option value="n">Ada göre</option><option value="s">Stok (çoktan aza)</option><option value="c">Maliyet (düşükten yükseğe)</option></select>
+        <div id="plist" style="margin-top:8px"></div></div>
+    </div></div>
+    <div class="hide" id="pr-2">
+      <div class="card"><h2>Servis adları</h2>
+        <p class="sub">Her satıra bir servis yaz: kod=Ad (örn. wa=WhatsApp). Adı boş olan satırlar atlanır. Servis kodlarını Turonay’ın fiyatlar sayfasında görebilirsin.</p>
+        <textarea id="nt" rows="10" spellcheck="false" autocapitalize="off"></textarea>
+        <button class="btn" id="nsave" style="margin-top:14px">Adları kaydet</button></div>
+    </div>
+  </div>
+
+  <div class="apanel hide" id="a-su">
+    <div class="subnav mini" data-panels="su-1,su-2"><button data-m="su-1" aria-selected="true">Ürünler</button><button data-m="su-2" aria-selected="false">Erişim listesi</button></div>
+    <div id="su-1">
+      <div class="card"><h2>Tedarikte satılanlar</h2>
+        <p class="sub">Kaldırmak için ürünün yanındaki düğmeye bas. Yeni eklemek için aşağıdaki bölümden ülkeyi seçip servise fiyat yaz.</p>
+        <div id="slist"></div></div>
+      <div id="sslot"></div>
+    </div>
+    <div class="hide" id="su-2">
+      <div class="card"><h2>Tedarik erişimi</h2>
+        <p class="sub">Tedarik menüsünü sadece buraya yazdığın e-postalar görebilir. Her satıra bir e-posta yaz.</p>
+        <textarea id="sa" rows="6" spellcheck="false" autocapitalize="off"></textarea>
+        <button class="btn" id="sasave" style="margin-top:14px">Erişimi kaydet</button></div>
+    </div>
+  </div>
+
+  <div class="apanel hide" id="a-us">
+    <div class="card"><h2>Bakiye düzelt</h2>
+      <label for="ae">Kullanıcı e-postası</label><input id="ae" type="email">
+      <label for="aa">Tutar (₺). Çıkarmak için eksi yaz: -10</label><input id="aa" type="text" inputmode="text" placeholder="25 veya -10">
+      <button class="btn" id="aadj" style="margin-top:14px">Uygula</button></div>
+    <div class="card"><h2>Kullanıcılar</h2>
+      <input id="uq" type="text" placeholder="E-posta ara… (satıra dokun, forma eklensin)" autocomplete="off" style="margin-bottom:8px">
+      <div id="ausers"></div></div>
+  </div>
+
+  <div class="apanel hide" id="a-st">
+    <div class="card"><h2>Ayarlar</h2>
+      <label for="mk">Varsayılan kâr marjı (%), özel fiyat girmediğin servisler için</label><input id="mk" type="number" inputmode="decimal">
+      <label for="rdp">Referans: davet edilen kişinin indirimi (%)</label><input id="rdp" type="number" inputmode="decimal">
+      <label for="rdo">Referans: indirimin geçerli olduğu alış sayısı</label><input id="rdo" type="number" inputmode="numeric">
+      <label for="rrp">Referans: davet edene verilen bakiye (ilk yükleme tutarının %)</label><input id="rrp" type="number" inputmode="decimal">
+      <label for="ibn">IBAN sahibi adı</label><input id="ibn" type="text">
+      <label for="ib">IBAN</label><input id="ib" type="text">
+      <button class="btn" id="aset" style="margin-top:14px">Kaydet</button></div>
+  </div>
 </div>
 </main>
 </section>
@@ -248,14 +311,14 @@ async function api(body){
 }
 
 /* auth */
-function setMode(m){mode=m;$("t-in").setAttribute("aria-selected",m==="in");$("t-up").setAttribute("aria-selected",m==="up");$("go").textContent=m==="in"?"Giriş yap":"Hesap oluştur";$("amsg").textContent=""}
+function setMode(m){mode=m;$("t-in").setAttribute("aria-selected",m==="in");$("t-up").setAttribute("aria-selected",m==="up");$("go").textContent=m==="in"?"Giriş yap":"Hesap oluştur";$("rfw").classList.toggle("hide",m!=="up");$("amsg").textContent=""}
 $("t-in").onclick=()=>setMode("in");$("t-up").onclick=()=>setMode("up");
 $("go").onclick=async()=>{
   $("amsg").textContent="";$("amsg").style.color="";
   const email=$("em").value.trim(),password=$("pw").value;
   if(!email||password.length<6){$("amsg").style.color="var(--bad)";$("amsg").textContent="E-posta ve en az 6 karakterli şifre gir.";return}
   $("go").disabled=true;
-  const {error,data}=mode==="in"?await sb.auth.signInWithPassword({email,password}):await sb.auth.signUp({email,password});
+  const {error,data}=mode==="in"?await sb.auth.signInWithPassword({email,password}):await sb.auth.signUp({email,password,options:{data:{ref:($("rf").value||"").trim().toUpperCase().slice(0,12)}}});
   $("go").disabled=false;
   if(error){$("amsg").style.color="var(--bad)";$("amsg").textContent=error.message;return}
   if(mode==="up"&&!data.session){$("amsg").style.color="var(--ok)";$("amsg").textContent="Kayıt tamam. E-postana gelen bağlantıya tıkla, sonra giriş yap."}
@@ -336,6 +399,7 @@ $("buy").onclick=async()=>{
   busy=false;$("buy").textContent="Numara al";upd();
   if(r.error)toast(r.error);else toast("Numara alındı. Kodu bekle.");
   await loadBalance();await loadOrders();
+  if(!r.error&&smode==="normal"&&!$("rbanner").classList.contains("hide")){await refreshMe();if(catalog){catalog.loaded={};catalog.prices={};if(selC)pickCountry(selC)}}
 };
 
 /* balance + orders */
@@ -387,13 +451,35 @@ async function poll(){
 let isAdmin=false;
 function view(v){
   const vv=v==="sup"?"buy":v;
-  ["buy","dep","adm"].forEach(x=>$("v-"+x).classList.toggle("hide",x!==vv));
+  ["buy","dep","adm","ref"].forEach(x=>$("v-"+x).classList.toggle("hide",x!==vv));
   document.querySelectorAll("#nav button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v));
   if(vv==="buy")setSMode(v==="sup"?"supply":"normal");
-  if(v==="dep")loadDeps();if(v==="adm")loadAdmin();
+  if(v==="dep")loadDeps();if(v==="adm"){showAdminTab(atab);loadAdmin()}if(v==="ref")loadRef();
 }
 document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>view(b.dataset.v));
 const num=v=>Number(String(v).replace(",","."));
+async function refreshMe(){
+  let code="";try{code=localStorage.getItem("ref")||""}catch(e){}
+  const m=await api({action:"me",code});
+  if(m.error)return;
+  isAdmin=!!m.isAdmin;$("admtab").classList.toggle("hide",!isAdmin);$("suptab").classList.toggle("hide",!m.supply);
+  if(m.refDone){try{localStorage.removeItem("ref")}catch(e){}}
+  if(isAdmin)api({action:"admin_overview"}).then(x=>{if(x.pending)setBadge(x.pending.length)});
+  const rb=$("rbanner");
+  if(m.ordersLeft>0&&m.discountPercent>0){rb.textContent="Referans indirimin aktif: sonraki "+m.ordersLeft+" alışta %"+m.discountPercent+" indirim. Fiyatlar indirimli görünür.";rb.classList.remove("hide")}
+  else rb.classList.add("hide");
+}
+async function loadRef(){
+  const r=await api({action:"ref_info"});
+  if(r.error){toast(r.error);return}
+  const link=location.origin+location.pathname+"?ref="+r.code;
+  $("rcode").textContent=r.code||"–";$("rlink").textContent=link;
+  $("rstat").textContent="Davet ettiğin kişi: "+r.count+" · Kazandığın bakiye: "+TL(r.earned);
+  $("rrule").textContent="Arkadaşın bu kodla kayıt olursa ilk "+r.rules.orders+" alışında %"+r.rules.discount+" indirim kazanır. Arkadaşının ilk bakiye yüklemesi onaylanınca sen o tutarın %"+r.rules.reward+" kadarını bakiye olarak kazanırsın.";
+}
+$("rcp1").onclick=()=>copy($("rcode").textContent);
+$("rcp2").onclick=()=>copy($("rlink").textContent);
+$("rwa").onclick=()=>window.open("https://wa.me/?text="+encodeURIComponent("SMS Onay’a bu bağlantıyla kayıt ol, ilk alışlarında indirim kazan: "+$("rlink").textContent),"_blank");
 const DST={pending:["b-waiting","Onay bekliyor"],approved:["b-done","Onaylandı"],rejected:["b-cancelled","Reddedildi"]};
 
 function bankBox(iban,name,ref,amount){
@@ -432,7 +518,8 @@ async function loadAdmin(){
   const r=await api({action:"admin_overview"});
   if(r.error){toast(r.error);return}
   const s=r.stats;
-  $("ast").textContent="Kullanıcı: "+r.users.length+" · Bekleyen sipariş: "+s.waiting+" · Ciro: "+TL(s.revenue)+" · Kâr: "+TL(s.profit);
+  tiles([["Kullanıcı",r.users.length],["Bekleyen yükleme",r.pending.length],["Bekleyen sipariş",s.waiting],["Ciro",TL(s.revenue)],["Kâr",TL(s.profit)]]);
+  setBadge(r.pending.length);
   const pd=$("apend");pd.innerHTML="";
   if(!r.pending.length)pd.appendChild(mk("div","empty","Bekleyen talep yok"));
   r.pending.forEach(d=>{
@@ -443,10 +530,53 @@ async function loadAdmin(){
   });
   if(!$("pc").options.length)loadPriceCountries();else loadSupplyList();
   api({action:"admin_access_get"}).then(x=>{if(x.emails)$("sa").value=x.emails.join("\n")});
-  $("mk").value=r.markup;$("ib").value=r.iban;$("ibn").value=r.name;
-  const ul=$("ausers");ul.innerHTML="";
-  r.users.forEach(u=>{const row=mk("div","meta");row.append(mk("span",null,u.email),mk("b",null,TL(u.balance)));ul.appendChild(row)});
+  $("mk").value=r.markup;$("rdp").value=r.refs.discount;$("rdo").value=r.refs.orders;$("rrp").value=r.refs.reward;$("ib").value=r.iban;$("ibn").value=r.name;
+  AU=r.users;drawUsers();
 }
+let AU=[];
+function setBadge(n){$("pbad").textContent=n?String(n):"";$("admtab").textContent="Admin"+(n?" ("+n+")":"")}
+function tiles(pairs){
+  const box=$("ast");box.innerHTML="";
+  pairs.forEach(([l,v])=>{const t=mk("div","tile");t.append(mk("div","v",String(v)),mk("div","l",l));box.appendChild(t)});
+}
+function drawUsers(){
+  const ul=$("ausers");ul.innerHTML="";
+  const q=$("uq").value.trim().toLowerCase();
+  const rows=AU.filter(u=>u.email.toLowerCase().includes(q));
+  if(!rows.length){ul.appendChild(mk("div","empty","Kullanıcı bulunamadı"));return}
+  rows.forEach(u=>{
+    const row=mk("div","meta");row.style.cursor="pointer";row.style.padding="8px 0";
+    row.append(mk("span",null,u.email),mk("b",null,TL(u.balance)));
+    row.onclick=()=>{$("ae").value=u.email;$("aa").focus();toast("E-posta forma yazıldı, tutarı gir")};
+    ul.appendChild(row);
+  });
+}
+$("uq").oninput=drawUsers;
+const TXT_N=$("ehint").textContent;
+const TXT_S="Ülkeyi seç, satmak istediğin servise fiyat yazıp Kaydet de. Fiyat yazdığın servis tedarik menüsüne eklenir. Tedarikte tek bir ülke seçilir.";
+let atab="ov";try{const t=localStorage.getItem("atab");if(["ov","dp","pr","su","us","st"].includes(t))atab=t}catch(e){}
+function showAdminTab(t){
+  atab=t;
+  ["ov","dp","pr","su","us","st"].forEach(x=>$("a-"+x).classList.toggle("hide",x!==t));
+  document.querySelectorAll("#anav button").forEach(b=>b.setAttribute("aria-selected",b.dataset.a===t));
+  if(t==="pr"||t==="su"){
+    const sup=t==="su";
+    $(sup?"sslot":"pslot").appendChild($("ecard"));
+    $("pm").value=sup?"s":"n";
+    $("eh").textContent=sup?"Tedarik fiyatı ekle / düzenle":"Satış fiyatları";
+    $("ehint").textContent=sup?TXT_S:TXT_N;
+    if(sup&&$("pc").value==="*")$("pc").value="";
+    if($("pc").options.length)loadPrices();
+  }
+  try{localStorage.setItem("atab",t)}catch(e){}
+}
+document.querySelectorAll("#anav button").forEach(b=>b.onclick=()=>showAdminTab(b.dataset.a));
+document.querySelectorAll(".subnav.mini").forEach(nav=>{
+  nav.querySelectorAll("button").forEach(b=>b.onclick=()=>{
+    nav.querySelectorAll("button").forEach(x=>x.setAttribute("aria-selected",x===b));
+    nav.dataset.panels.split(",").forEach(id=>$(id).classList.toggle("hide",id!==b.dataset.m));
+  });
+});
 let pcData=null;
 async function loadPriceCountries(){
   const r=await api({action:"admin_catalog"});
@@ -494,7 +624,6 @@ function drawPrices(){
 }
 $("pc").onchange=loadPrices;const phint=()=>$("phint").classList.toggle("hide",$("pm").value!=="s");
 $("pm").onchange=()=>{phint();loadPrices()};
-$("sadd").onclick=()=>{$("pm").value="s";$("pc").value="";phint();loadPrices();$("pm").scrollIntoView({behavior:"smooth",block:"center"});toast("Ülkeyi seç, satacağın servislere fiyat yaz")};
 function cname(id){const o=[...$("pc").options].find(x=>x.value===id);return o?o.textContent:"Ülke "+id}
 async function loadSupplyList(){
   const box=$("slist");
@@ -555,7 +684,7 @@ $("aadj").onclick=async()=>{
   toast(r.error||"Bakiye güncellendi");loadAdmin();
 };
 $("aset").onclick=async()=>{
-  for(const [k,v] of [["markup_percent",$("mk").value],["iban_name",$("ibn").value],["iban",$("ib").value]]){
+  for(const [k,v] of [["markup_percent",$("mk").value],["ref_discount_percent",$("rdp").value],["ref_discount_orders",$("rdo").value],["ref_reward_percent",$("rrp").value],["iban_name",$("ibn").value],["iban",$("ib").value]]){
     const r=await api({action:"admin_set",key:k,value:v});if(r.error){toast(r.error);return}
   }
   toast("Ayarlar kaydedildi");
@@ -567,11 +696,15 @@ async function show(session){
   clearInterval(pollT);clearInterval(tickT);
   if(!user)return;
   $("av").textContent=(user.email||"?")[0].toUpperCase();
-  api({action:"me"}).then(m=>{isAdmin=!!m.isAdmin;$("admtab").classList.toggle("hide",!isAdmin);$("suptab").classList.toggle("hide",!m.supply)});
+  refreshMe();
   await loadNames();await loadBalance();await loadOrders();
   if(!catalog){drawServices();loadCatalog()}
   pollT=setInterval(poll,5000);tickT=setInterval(tick,1000);
 }
+(function(){
+  const q=(new URLSearchParams(location.search).get("ref")||"").trim().toUpperCase().slice(0,12);
+  if(q&&/^[A-Z0-9]+$/.test(q)){try{localStorage.setItem("ref",q)}catch(e){}$("rf").value=q;setMode("up")}
+})();
 sb.auth.onAuthStateChange((_e,s)=>setTimeout(()=>show(s),0));
 sb.auth.getSession().then(({data})=>show(data.session));
 </script>
