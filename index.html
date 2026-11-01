@@ -115,6 +115,20 @@ main{max-width:1040px;margin:0 auto;padding:18px 16px 40px}
 .chk input{width:20px;height:20px;margin-top:2px;flex:none}
 .chip.out{opacity:.75;border-style:dashed}
 .pubrow{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
+.rk{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:700;border:1px solid currentColor;white-space:nowrap}
+.rk[data-l="0"]{color:#7b8498}.rk[data-l="1"]{color:#b87333}.rk[data-l="2"]{color:#8d99ae}.rk[data-l="3"]{color:#c99a0a}.rk[data-l="4"]{color:#2fa3b3}.rk[data-l="5"]{color:#6c63ff}
+.pbar{height:10px;background:var(--bg);border-radius:99px;overflow:hidden;margin:10px 0 6px}
+.pbar>i{display:block;height:100%;background:var(--acc);border-radius:99px}
+.brow{display:flex;gap:10px;align-items:center;padding:9px 6px;border-top:1px solid var(--line)}
+.brow.me{background:var(--accsoft);border-radius:8px}
+.brow .pos{width:28px;font-weight:800;color:var(--mute);font-variant-numeric:tabular-nums}
+.brow .nm{flex:1;min-width:0;word-break:break-word}
+.chatbox{height:55vh;max-height:480px;overflow-y:auto;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--bg)}
+.cm{margin-bottom:10px}
+.cm .h{font-size:12px;color:var(--mute);display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.cm .t{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-top:3px;word-break:break-word}
+.cm.mine .t{background:var(--accsoft)}
+.cm .ad{color:var(--bad);font-weight:700}
 a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;text-align:center}
 .support{margin-top:16px;padding:14px;border:1px dashed var(--line);border-radius:10px}
 .support p{margin:0 0 10px;font-size:14px;color:var(--mute)}
@@ -194,7 +208,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
   <div class="av" id="av" aria-hidden="true"></div>
   <button class="btn ghost sm" id="out">Çıkış</button>
 </div></header>
-<nav class="nav" id="nav"><button data-v="buy" aria-selected="true">Numara al</button><button data-v="sup" id="suptab" class="hide" aria-selected="false">Tedarik</button><button data-v="dep" aria-selected="false">Bakiye yükle</button><button data-v="ref" aria-selected="false">Referans</button><button data-v="adm" id="admtab" class="hide" aria-selected="false">Admin</button></nav>
+<nav class="nav" id="nav"><button data-v="buy" aria-selected="true">Numara al</button><button data-v="sup" id="suptab" class="hide" aria-selected="false">Tedarik</button><button data-v="dep" aria-selected="false">Bakiye yükle</button><button data-v="ref" aria-selected="false">Referans</button><button data-v="rank" aria-selected="false">Rütbe</button><button data-v="chat" aria-selected="false">Sohbet</button><button data-v="adm" id="admtab" class="hide" aria-selected="false">Admin</button></nav>
 <main><div id="v-buy" class="grid">
   <div class="card">
     <h2 id="bh">Numara al</h2><p class="sub">Ülkeyi ve servisi seç.</p>
@@ -231,6 +245,24 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
   <div class="row"><button class="btn ghost sm" id="rcp1">Kodu kopyala</button><button class="btn ghost sm" id="rcp2">Bağlantıyı kopyala</button></div>
   <button class="btn" id="rwa" style="width:100%;margin-top:10px">WhatsApp’ta paylaş</button>
   <p class="sub" id="rstat" style="margin-top:14px"></p>
+</div></div>
+
+<div id="v-rank" class="hide stack">
+  <div class="card"><h2>Rütbem</h2><div id="rkme"></div>
+    <label for="nick">Takma ad (sohbette ve sıralamada görünür)</label>
+    <div class="row"><input id="nick" type="text" maxlength="16" autocomplete="off" autocapitalize="off" style="flex:2"><button class="btn" id="nicksave">Kaydet</button></div>
+  </div>
+  <div class="card"><h2>Sıralama</h2>
+    <div class="row"><button class="btn sm" id="bd-spent">En çok alış yapanlar</button><button class="btn ghost sm" id="bd-inv">En çok davet edenler</button></div>
+    <div id="board" style="margin-top:10px"></div>
+  </div>
+</div>
+
+<div id="v-chat" class="hide stack"><div class="card"><h2>Sohbet</h2>
+  <p class="sub">Link, telefon, e-posta ve IBAN paylaşmak yasaktır. Para işlemleri için sadece sitedeki yöntemleri kullan.</p>
+  <div id="chatbox" class="chatbox"></div>
+  <p class="sub" id="chatnote" style="margin-top:8px;color:var(--bad)"></p>
+  <div class="row"><input id="chatin" type="text" maxlength="300" placeholder="Mesaj yaz…" autocomplete="off" style="flex:3"><button class="btn" id="chatgo">Gönder</button></div>
 </div></div>
 
 <div id="v-adm" class="hide stack">
@@ -296,12 +328,17 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
   </div>
 
   <div class="apanel hide" id="a-us">
+    <div class="card"><h2>Kullanıcı geçmişi</h2>
+      <label for="uhq" style="margin-top:0">E-posta (tamamı ya da bir kısmı)</label>
+      <input id="uhq" type="text" placeholder="örn. ornek@gmail.com" autocomplete="off" autocapitalize="off">
+      <button class="btn" id="uhgo" style="margin-top:12px;width:100%">Geçmişi getir</button>
+      <div id="uhbox" style="margin-top:12px"></div></div>
     <div class="card"><h2>Bakiye düzelt</h2>
       <label for="ae">Kullanıcı e-postası</label><input id="ae" type="email">
       <label for="aa">Tutar (₺). Çıkarmak için eksi yaz: -10</label><input id="aa" type="text" inputmode="text" placeholder="25 veya -10">
       <button class="btn" id="aadj" style="margin-top:14px">Uygula</button></div>
     <div class="card"><h2>Kullanıcılar</h2>
-      <input id="uq" type="text" placeholder="E-posta ara… (satıra dokun, forma eklensin)" autocomplete="off" style="margin-bottom:8px">
+      <input id="uq" type="text" placeholder="E-posta ara… (satıra dokun, geçmişi açılsın)" autocomplete="off" style="margin-bottom:8px">
       <div id="ausers"></div></div>
   </div>
 
@@ -313,6 +350,8 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
       <label for="rrp">Referans: davet edene verilen bakiye (ilk yükleme tutarının %)</label><input id="rrp" type="number" inputmode="decimal">
       <label for="ibn">IBAN sahibi adı</label><input id="ibn" type="text">
       <label for="ib">IBAN</label><input id="ib" type="text">
+      <label for="rkt">Rütbe eşikleri (6 sayı, toplam harcama ₺, 0 ile başlar)</label><input id="rkt" type="text" inputmode="text" placeholder="0,50,250,1000,3000,10000">
+      <label for="rkd">Rütbe indirimleri (6 sayı, % olarak)</label><input id="rkd" type="text" inputmode="text" placeholder="0,0,0,0,0,0">
       <button class="btn" id="aset" style="margin-top:14px">Kaydet</button></div>
   </div>
 </div>
@@ -469,6 +508,121 @@ async function loadBalance(){
   const {data}=await sb.from("profiles").select("balance").eq("id",user.id).single();
   $("bal").textContent=data?TL(data.balance):"–";
 }
+let chatT=null,chatSig="";
+const RK_ICON=["🌱","🥉","🥈","🥇","💠","💎"];
+function rkBadge(l,name){const e=mk("span","rk",RK_ICON[l]+" "+name);e.dataset.l=l;return e}
+
+async function loadRank(){
+  const r=await api({action:"rank_info"});
+  if(r.error){toast(r.error);return}
+  const box=$("rkme");box.innerHTML="";
+  const top=mk("div","oh");top.append(rkBadge(r.level,r.name),mk("span","tag",r.doneCount+" tamamlanan alış"));box.appendChild(top);
+  if(r.nextAt!=null){
+    const pct=Math.max(2,Math.min(100,Math.round((r.spent-r.curAt)/(r.nextAt-r.curAt)*100)));
+    const bar=mk("div","pbar"),fill=document.createElement("i");fill.style.width=pct+"%";bar.appendChild(fill);box.appendChild(bar);
+    box.appendChild(mk("div","sub","Sonraki rütbe "+r.nextName+" için "+TL(Math.max(0,r.nextAt-r.spent))+" daha harca."));
+  }else box.appendChild(mk("div","sub","En yüksek rütbedesin."));
+  box.appendChild(mk("div","sub",r.perk>0?"Rütbe indirimin: %"+r.perk+" (normal satışlarda geçerli)":"Bu rütbede indirim yok."));
+  $("nick").value=r.nick||"";
+  loadBoard(boardType);
+}
+let boardType="spent";
+async function loadBoard(t){
+  boardType=t;
+  $("bd-spent").classList.toggle("ghost",t!=="spent");$("bd-inv").classList.toggle("ghost",t!=="invite");
+  const box=$("board");box.textContent="Yükleniyor…";
+  const r=await api({action:"leaderboard",type:t});
+  box.innerHTML="";
+  if(r.error){box.textContent=r.error;return}
+  if(!r.rows.length){box.appendChild(mk("div","empty","Henüz kimse yok."));return}
+  r.rows.forEach(x=>{
+    const row=mk("div","brow"+(x.me?" me":""));
+    const nm=mk("div","nm");nm.append(mk("div",null,x.nick),rkBadge(x.level,x.name));
+    row.append(mk("div","pos",String(x.pos)),nm,mk("b",null,x.count+x.label));
+    box.appendChild(row);
+  });
+}
+$("bd-spent").onclick=()=>loadBoard("spent");
+$("bd-inv").onclick=()=>loadBoard("invite");
+$("nicksave").onclick=async()=>{
+  const r=await api({action:"set_nick",nick:$("nick").value.trim()});
+  toast(r.error||"Takma ad kaydedildi");
+};
+
+async function chatLoad(force){
+  const r=await api({action:"chat_list"});
+  if(r.error)return;
+  const sig=r.messages.map(m=>m.id).join(",");
+  $("chatnote").textContent=r.canWrite?"":r.why;
+  if(sig===chatSig&&!force)return;
+  chatSig=sig;
+  const box=$("chatbox"),atBottom=box.scrollHeight-box.scrollTop-box.clientHeight<60;
+  box.innerHTML="";
+  if(!r.messages.length)box.appendChild(mk("div","empty","Henüz mesaj yok."));
+  r.messages.forEach(m=>{
+    const d=mk("div","cm"+(m.mine?" mine":"")),h=mk("div","h");
+    h.append(mk("b",null,m.nick));
+    if(m.admin)h.append(mk("span","ad","Yönetici"));else h.append(rkBadge(m.level,m.name));
+    h.append(mk("span",null,new Date(m.at).toLocaleTimeString("tr-TR",{hour:"2-digit",minute:"2-digit"})));
+    if(isAdmin){
+      const del=mk("button","btn danger sm","Sil");del.style.minHeight="26px";del.style.padding="2px 8px";
+      del.onclick=async()=>{await api({action:"admin_chat_delete",id:m.id});chatLoad(true)};
+      const mu=mk("button","btn ghost sm","Sustur");mu.style.minHeight="26px";mu.style.padding="2px 8px";
+      mu.onclick=async()=>{const x=await api({action:"admin_chat_mute",uid:m.uid,minutes:60});toast(x.error||"60 dk susturuldu")};
+      h.append(del,mu);
+    }
+    d.append(h,mk("div","t",m.body));box.appendChild(d);
+  });
+  if(atBottom||force)box.scrollTop=box.scrollHeight;
+}
+$("chatgo").onclick=async()=>{
+  const text=$("chatin").value.trim();if(!text)return;
+  $("chatgo").disabled=true;
+  const r=await api({action:"chat_send",text});
+  $("chatgo").disabled=false;
+  if(r.error){toast(r.error);return}
+  $("chatin").value="";chatLoad(true);
+};
+$("chatin").onkeydown=e=>{if(e.key==="Enter")$("chatgo").click()};
+
+function hrow(l,r,col){const d=mk("div","meta");d.style.cssText="padding:6px 0;border-top:1px solid var(--line);gap:8px";d.append(mk("span",null,l),mk("b",null,r));if(col)d.lastChild.style.color=col;return d}
+function dsec(title,rows){
+  const d=mk("details");d.style.marginTop="10px";
+  const sm=mk("summary",null,title+" ("+rows.length+")");sm.style.cssText="cursor:pointer;font-weight:600";d.appendChild(sm);
+  rows.forEach(x=>d.appendChild(x));if(!rows.length)d.appendChild(mk("div","sub","Kayıt yok"));return d;
+}
+async function userHist(q){
+  const box=$("uhbox");box.textContent="Yükleniyor…";
+  const r=await api({action:"admin_user_history",email:q});
+  box.innerHTML="";
+  if(r.error){box.appendChild(mk("div","sub",r.error));return}
+  if(r.matches){
+    box.appendChild(mk("div","sub","Birden fazla eşleşme var, birini seç:"));
+    r.matches.forEach(e=>{const b=mk("button","btn ghost sm",e);b.style.margin="6px 6px 0 0";b.onclick=()=>{$("uhq").value=e;userHist(e)};box.appendChild(b)});
+    return;
+  }
+  const p=r.profile,fd=t=>new Date(t).toLocaleString("tr-TR");
+  const info=mk("div","bank");info.style.fontSize="14px";
+  info.append(mk("b",null,p.email),
+    mk("div",null,"Bakiye: "+TL(p.balance)+" · Toplam harcama: "+TL(p.spent)+" · Tamamlanan alış: "+p.done_count),
+    mk("div",null,"Rütbe: "+p.rank+" · Takma ad: "+(p.nick||"–")),
+    mk("div",null,"Kayıt: "+fd(p.created_at)+" · Referans kodu: "+(p.ref_code||"–")),
+    mk("div",null,"Davet eden: "+(p.referredByEmail||"–")+" · Davet ettiği: "+p.invited+" · Referans kazancı: "+TL(p.rewards)));
+  const muted=p.muted_until&&new Date(p.muted_until)>new Date();
+  if(muted)info.append(mk("div",null,"Sohbette susturulmuş: "+fd(p.muted_until)+" tarihine kadar"));
+  box.appendChild(info);
+  const act=mk("div","row");
+  const b1=mk("button","btn ghost sm","Bakiye formuna aktar");b1.onclick=()=>{$("ae").value=p.email;$("aa").focus()};
+  const b2=mk("button","btn ghost sm",muted?"Susturmayı kaldır":"Sohbette sustur (60 dk)");
+  b2.onclick=async()=>{const x=await api({action:"admin_chat_mute",email:p.email,minutes:muted?0:60});toast(x.error||(muted?"Susturma kaldırıldı":"Susturuldu"));userHist(p.email)};
+  act.append(b1,b2);box.appendChild(act);
+  box.appendChild(dsec("Siparişler",r.orders.map(o=>hrow(fd(o.created_at)+" · "+(NAMES[o.service]||o.service.toUpperCase())+" · "+cname(o.country)+(o.kind==="supply"?" · tedarik":"")+(o.phone?" · +"+o.phone:""),TL(o.price)+" · "+STAT[o.status]))));
+  box.appendChild(dsec("Bakiye yüklemeleri",r.deposits.map(d=>hrow(fd(d.created_at)+" · "+d.ref,TL(d.amount)+" · "+DST[d.status][1]))));
+  box.appendChild(dsec("Bakiye hareketleri",r.log.map(l=>hrow(fd(l.created_at),(l.delta>0?"+":"")+TL(l.delta)+" → "+TL(l.balance_after),l.delta>0?"var(--ok)":"var(--bad)"))));
+}
+$("uhgo").onclick=()=>{const q=$("uhq").value.trim();if(q)userHist(q)};
+$("uhq").onkeydown=e=>{if(e.key==="Enter")$("uhgo").click()};
+
 const STAT={waiting:"Kod bekleniyor",done:"Tamamlandı",cancelled:"İptal edildi"};
 function copy(t){navigator.clipboard.writeText(t).then(()=>toast("Kopyalandı"),()=>toast("Kopyalanamadı"))}
 async function loadOrders(){
@@ -586,10 +740,12 @@ function drawPub(){
 let isAdmin=false;
 function view(v){
   const vv=v==="sup"?"buy":v;
-  ["buy","dep","adm","ref"].forEach(x=>$("v-"+x).classList.toggle("hide",x!==vv));
+  ["buy","dep","adm","ref","rank","chat"].forEach(x=>$("v-"+x).classList.toggle("hide",x!==vv));
   document.querySelectorAll("#nav button").forEach(b=>b.setAttribute("aria-selected",b.dataset.v===v));
   if(vv==="buy")setSMode(v==="sup"?"supply":"normal");
   if(v==="dep")loadDeps();if(v==="adm"){showAdminTab(atab);loadAdmin()}if(v==="ref")loadRef();
+  clearInterval(chatT);if(v==="rank")loadRank();
+  if(v==="chat"){chatLoad(true);chatT=setInterval(()=>chatLoad(false),4000)}
 }
 document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>view(b.dataset.v));
 const num=v=>Number(String(v).replace(",","."));
@@ -665,6 +821,7 @@ async function loadAdmin(){
     ok.onclick=()=>decide(d.id,true);no.onclick=()=>decide(d.id,false);a.append(ok,no);row.appendChild(a);pd.appendChild(row);
   });
   if(!$("pc").options.length)loadPriceCountries();else loadSupplyList();
+  api({action:"admin_rank_get"}).then(x=>{if(x.thresholds){$("rkt").value=x.thresholds;$("rkd").value=x.discounts}});
   api({action:"admin_access_get"}).then(x=>{if(x.emails)$("sa").value=x.emails.join("\n")});
   $("mk").value=r.markup;$("rdp").value=r.refs.discount;$("rdo").value=r.refs.orders;$("rrp").value=r.refs.reward;$("ib").value=r.iban;$("ibn").value=r.name;
   AU=r.users;drawUsers();
@@ -683,7 +840,7 @@ function drawUsers(){
   rows.forEach(u=>{
     const row=mk("div","meta");row.style.cursor="pointer";row.style.padding="8px 0";
     row.append(mk("span",null,u.email),mk("b",null,TL(u.balance)));
-    row.onclick=()=>{$("ae").value=u.email;$("aa").focus();toast("E-posta forma yazıldı, tutarı gir")};
+    row.onclick=()=>{$("ae").value=u.email;$("uhq").value=u.email;userHist(u.email);$("uhq").scrollIntoView({behavior:"smooth",block:"center"})};
     ul.appendChild(row);
   });
 }
@@ -833,6 +990,8 @@ $("aset").onclick=async()=>{
   for(const [k,v] of [["markup_percent",$("mk").value],["ref_discount_percent",$("rdp").value],["ref_discount_orders",$("rdo").value],["ref_reward_percent",$("rrp").value],["iban_name",$("ibn").value],["iban",$("ib").value]]){
     const r=await api({action:"admin_set",key:k,value:v});if(r.error){toast(r.error);return}
   }
+  const rr=await api({action:"admin_rank_set",thresholds:$("rkt").value,discounts:$("rkd").value});
+  if(rr.error){toast(rr.error);return}
   toast("Ayarlar kaydedildi");
 };
 
