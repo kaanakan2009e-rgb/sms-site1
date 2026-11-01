@@ -6,6 +6,7 @@
 <title>SMS Onay | Anında sanal numara ve doğrulama kodu</title>
 <meta name="description" content="Sanal numara al, doğrulama kodunu saniyeler içinde gör. Kod gelmezse bakiyen iade edilir.">
 <meta name="theme-color" content="#2447d6">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' https://hnrugvzzfqhhkmnljdhy.supabase.co; object-src 'none'; base-uri 'none'; form-action 'none'">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232447d6'/%3E%3Crect x='11' y='6' width='10' height='20' rx='2' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E">
 <style>
 :root{--bg:#f4f5f8;--card:#fff;--ink:#141a2e;--mute:#667088;--line:#e1e5ee;--acc:#2447d6;--accsoft:#e8edff;--accfg:#fff;--ok:#12805c;--oksoft:#dff5ec;--warn:#9a5b00;--warnsoft:#fdf0d5;--bad:#c0322b;--badsoft:#fde6e4;--sh:0 1px 2px rgba(20,26,46,.06),0 4px 16px rgba(20,26,46,.05)}
@@ -109,6 +110,11 @@ main{max-width:1040px;margin:0 auto;padding:18px 16px 40px}
 .tile{background:var(--bg);border-radius:10px;padding:12px}
 .tile .v{font-size:20px;font-weight:800;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
 .tile .l{font-size:12px;color:var(--mute)}
+.linkbtn{background:none;border:0;color:var(--acc);font-weight:600;padding:10px 0;min-height:44px;margin-top:4px}
+.chk{display:flex;gap:10px;align-items:flex-start;margin:14px 0 0;font-weight:400;font-size:14px}
+.chk input{width:20px;height:20px;margin-top:2px;flex:none}
+.chip.out{opacity:.75;border-style:dashed}
+.pubrow{display:flex;justify-content:space-between;gap:10px;padding:10px 0;border-top:1px solid var(--line)}
 a.btn{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;text-align:center}
 .support{margin-top:16px;padding:14px;border:1px dashed var(--line);border-radius:10px}
 .support p{margin:0 0 10px;font-size:14px;color:var(--mute)}
@@ -138,10 +144,19 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
       <div class="tabs" role="tablist"><button id="t-in" role="tab" aria-selected="true">Giriş yap</button><button id="t-up" role="tab" aria-selected="false">Kayıt ol</button></div>
       <label for="em">E-posta</label><input id="em" type="email" autocomplete="email">
       <div id="rfw" class="hide"><label for="rf">Referans kodu (isteğe bağlı)</label><input id="rf" type="text" autocomplete="off" autocapitalize="characters" maxlength="12"></div>
-      <label for="pw">Şifre</label><input id="pw" type="password" autocomplete="current-password" placeholder="En az 6 karakter">
+      <label for="pw">Şifre</label><input id="pw" type="password" autocomplete="current-password" placeholder="Kayıtta en az 8 karakter">
       <button class="btn" id="go" style="width:100%;margin-top:18px">Giriş yap</button>
+      <button class="linkbtn" id="forgot" type="button">Şifremi unuttum</button>
       <p class="sub" id="amsg" role="status" style="margin-top:12px;min-height:20px"></p>
     </div>
+  </div>
+
+  <h2 class="sec">Güncel fiyatlar</h2>
+  <div class="card">
+    <label for="pubc" style="margin-top:0">Ülke</label><select id="pubc"><option value="">Ülke seç…</option></select>
+    <input id="pubq" type="text" placeholder="Servis ara…" autocomplete="off" style="margin-top:8px">
+    <div id="publ" style="margin-top:8px"></div>
+    <p class="sub" style="margin-top:12px">Fiyatlar anlık değişebilir. Satın alırken ödeyeceğin tutar, numarayı almadan önce net görünür.</p>
   </div>
 
   <h2 class="sec">Nasıl çalışır?</h2>
@@ -162,6 +177,16 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 </main>
 </section>
 
+<section id="reset" class="hide">
+<main><div class="card login" style="margin-top:8vh">
+  <h2>Yeni şifre belirle</h2>
+  <p class="sub">Hesabın için yeni bir şifre yaz (en az 8 karakter).</p>
+  <label for="np">Yeni şifre</label><input id="np" type="password" autocomplete="new-password">
+  <button class="btn" id="npgo" style="width:100%;margin-top:18px">Şifreyi kaydet</button>
+  <p class="sub" id="npmsg" role="status" style="margin-top:12px;min-height:20px"></p>
+</div></main>
+</section>
+
 <section id="app" class="hide">
 <header><div class="bar">
   <div class="brand"><div class="logo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.2" stroke-linecap="round"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></svg></div>SMS Onay</div>
@@ -180,6 +205,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
     <label for="ss">Servis</label>
     <input id="ss" type="text" placeholder="Servis ara…" autocomplete="off">
     <div class="chips" id="svc" role="group" aria-label="Servisler"></div>
+    <label class="chk"><input type="checkbox" id="ack"><span>Kod geldikten sonra iptal ve iade yapılmadığını kabul ediyorum.</span></label>
     <div class="total"><div><div class="sub" style="margin:0">Ödenecek tutar</div><div class="p" id="price">–</div></div><button class="btn" id="buy" disabled>Numara al</button></div>
   </div>
   <div class="card">
@@ -226,7 +252,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
   </div>
 
   <div class="apanel hide" id="a-pr">
-    <div class="subnav mini" data-panels="pr-1,pr-2"><button data-m="pr-1" aria-selected="true">Fiyat listesi</button><button data-m="pr-2" aria-selected="false">Servis adları</button></div>
+    <div class="subnav mini" data-panels="pr-1,pr-2,pr-3"><button data-m="pr-1" aria-selected="true">Fiyat listesi</button><button data-m="pr-2" aria-selected="false">Servis adları</button><button data-m="pr-3" aria-selected="false">Toplu ayar</button></div>
     <div id="pr-1"><div id="pslot">
       <div class="card" id="ecard"><h2 id="eh">Satış fiyatları</h2>
         <p class="sub" id="ehint">Servis için kendi satış fiyatını yaz. “Tüm ülkeler” seçersen fiyat o servisin her ülkesinde geçerli olur; tek ülke için girdiğin fiyat onu geçersiz kılar. Boş bıraktığın servis varsayılan marjla satılır.</p>
@@ -242,6 +268,14 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
         <p class="sub">Her satıra bir servis yaz: kod=Ad (örn. wa=WhatsApp). Adı boş olan satırlar atlanır. Servis kodlarını Turonay’ın fiyatlar sayfasında görebilirsin.</p>
         <textarea id="nt" rows="10" spellcheck="false" autocapitalize="off"></textarea>
         <button class="btn" id="nsave" style="margin-top:14px">Adları kaydet</button></div>
+    </div>
+    <div class="hide" id="pr-3">
+      <div class="card"><h2>Toplu fiyat ayarı</h2>
+        <p class="sub">Seçtiğin fiyat grubunu yüzde olarak artır ya da azalt. Azaltmak için eksi yaz (örn. -5). Uygulamadan önce kaç fiyatın değişeceği sorulur.</p>
+        <label for="bt">Ne değişsin?</label>
+        <select id="bt"><option value="markup">Varsayılan kâr marjı (puan olarak)</option><option value="normal">Elle girdiğim normal satış fiyatları</option><option value="supply">Tedarik fiyatları</option></select>
+        <label for="bp">Yüzde</label><input id="bp" type="text" inputmode="text" placeholder="Örn. 10 veya -5">
+        <button class="btn" id="bgo" style="margin-top:14px">Uygula</button></div>
     </div>
   </div>
 
@@ -289,6 +323,7 @@ a.btn{display:inline-flex;align-items:center;justify-content:center;text-decorat
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
 <script>
+let REC=/type=recovery/.test(location.hash);
 const SB_URL="https://hnrugvzzfqhhkmnljdhy.supabase.co";
 const SB_KEY="sb_publishable_covZ3l69V0EdSq2E73ARAQ_NnAPGS1E";
 const sb=supabase.createClient(SB_URL,SB_KEY);
@@ -296,7 +331,7 @@ const $=id=>document.getElementById(id);
 const TL=n=>Number(n).toLocaleString("tr-TR",{minimumFractionDigits:2,maximumFractionDigits:2})+" ₺";
 const NAMES={wa:"WhatsApp"};
 let smode="normal";const cats={normal:null,supply:null};
-let catalog=null,user=null,pollT=null,tickT=null,mode="in",selC=null,selS=null,busy=false;
+let catalog=null,user=null,pollT=null,tickT=null,alertT=null,mode="in",selC=null,selS=null,busy=false;
 
 function toast(t){const e=$("toast");e.textContent=t;e.classList.remove("hide");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.add("hide"),3500)}
 function mk(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
@@ -311,17 +346,41 @@ async function api(body){
 }
 
 /* auth */
-function setMode(m){mode=m;$("t-in").setAttribute("aria-selected",m==="in");$("t-up").setAttribute("aria-selected",m==="up");$("go").textContent=m==="in"?"Giriş yap":"Hesap oluştur";$("rfw").classList.toggle("hide",m!=="up");$("amsg").textContent=""}
+function setMode(m){mode=m;$("t-in").setAttribute("aria-selected",m==="in");$("t-up").setAttribute("aria-selected",m==="up");$("go").textContent=m==="in"?"Giriş yap":"Hesap oluştur";$("rfw").classList.toggle("hide",m!=="up");$("forgot").classList.toggle("hide",m!=="in");$("amsg").textContent=""}
 $("t-in").onclick=()=>setMode("in");$("t-up").onclick=()=>setMode("up");
 $("go").onclick=async()=>{
   $("amsg").textContent="";$("amsg").style.color="";
   const email=$("em").value.trim(),password=$("pw").value;
-  if(!email||password.length<6){$("amsg").style.color="var(--bad)";$("amsg").textContent="E-posta ve en az 6 karakterli şifre gir.";return}
+  if(!email||!password||(mode==="up"&&password.length<8)){$("amsg").style.color="var(--bad)";$("amsg").textContent="E-posta ve şifre gir (kayıtta şifre en az 8 karakter).";return}
   $("go").disabled=true;
   const {error,data}=mode==="in"?await sb.auth.signInWithPassword({email,password}):await sb.auth.signUp({email,password,options:{data:{ref:($("rf").value||"").trim().toUpperCase().slice(0,12)}}});
   $("go").disabled=false;
-  if(error){$("amsg").style.color="var(--bad)";$("amsg").textContent=error.message;return}
+  if(error){
+    $("amsg").style.color="var(--bad)";
+    const em=error.message||"";
+    $("amsg").textContent=/database error|already registered|already been registered/i.test(em)?"Bu e-posta adresiyle zaten bir hesap var. Giriş yapmayı dene.":/invalid login/i.test(em)?"E-posta veya şifre hatalı.":em;
+    return;
+  }
   if(mode==="up"&&!data.session){$("amsg").style.color="var(--ok)";$("amsg").textContent="Kayıt tamam. E-postana gelen bağlantıya tıkla, sonra giriş yap."}
+};
+$("forgot").onclick=async()=>{
+  const email=$("em").value.trim();
+  if(!email){$("amsg").style.color="var(--bad)";$("amsg").textContent="Önce e-posta adresini yaz.";return}
+  $("forgot").disabled=true;
+  await sb.auth.resetPasswordForEmail(email,{redirectTo:location.origin+location.pathname});
+  $("forgot").disabled=false;
+  $("amsg").style.color="var(--ok)";$("amsg").textContent="Bu e-posta kayıtlıysa şifre sıfırlama bağlantısı gönderildi. Gelen kutunu ve spam klasörünü kontrol et.";
+};
+$("npgo").onclick=async()=>{
+  const np=$("np").value;
+  if(np.length<8){$("npmsg").style.color="var(--bad)";$("npmsg").textContent="Şifre en az 8 karakter olmalı.";return}
+  $("npgo").disabled=true;
+  const {error}=await sb.auth.updateUser({password:np});
+  $("npgo").disabled=false;
+  if(error){$("npmsg").style.color="var(--bad)";$("npmsg").textContent=error.message;return}
+  REC=false;try{history.replaceState(null,"",location.pathname+location.search)}catch(e){}
+  $("np").value="";toast("Şifren güncellendi");
+  const {data}=await sb.auth.getSession();show(data.session);
 };
 $("out").onclick=async()=>{await sb.auth.signOut();location.reload()};
 
@@ -384,19 +443,22 @@ function drawServices(){
   const q=$("ss").value.toLowerCase(),list=catalog.prices[selC]||{};
   Object.keys(list).filter(s=>(NAMES[s]||s).toLowerCase().includes(q)).forEach(s=>{
     const b=mk("button","chip");b.type="button";b.setAttribute("aria-pressed",s===selS);
-    b.append(mk("b",null,NAMES[s]||s.toUpperCase()),mk("span",null,TL(list[s].cost)));
-    b.onclick=()=>{selS=s;drawServices();upd()};box.appendChild(b);
+    const out=!(Number(list[s].count)>0),key=selC+":"+s,c0=selC;
+    b.append(mk("b",null,NAMES[s]||s.toUpperCase()),mk("span",null,out?(ALERTS.has(key)?"Stok yok · 🔔 haber verilecek":"Stok yok · haber ver"):TL(list[s].cost)));
+    if(out){b.classList.add("out");b.onclick=()=>toggleAlert(c0,s)}else b.onclick=()=>{selS=s;drawServices();upd()};
+    box.appendChild(b);
   });
 }
 function upd(){
   const p=selC&&selS&&catalog.prices[selC]?.[selS];
-  $("price").textContent=p?TL(p.cost):"–";$("buy").disabled=!p||busy;
+  $("price").textContent=p?TL(p.cost):"–";$("buy").disabled=!p||busy||!$("ack").checked;
 }
+$("ack").onchange=upd;
 $("cs").oninput=()=>catalog&&drawCountries();$("ss").oninput=()=>catalog&&drawServices();
 $("buy").onclick=async()=>{
   busy=true;upd();$("buy").textContent="Alınıyor…";
   const r=await api({action:smode==="supply"?"supply_buy":"buy",service:selS,country:selC});
-  busy=false;$("buy").textContent="Numara al";upd();
+  busy=false;$("buy").textContent="Numara al";if(!r.error)$("ack").checked=false;upd();
   if(r.error)toast(r.error);else toast("Numara alındı. Kodu bekle.");
   await loadBalance();await loadOrders();
   if(!r.error&&smode==="normal"&&!$("rbanner").classList.contains("hide")){await refreshMe();if(catalog){catalog.loaded={};catalog.prices={};if(selC)pickCountry(selC)}}
@@ -410,7 +472,7 @@ async function loadBalance(){
 const STAT={waiting:"Kod bekleniyor",done:"Tamamlandı",cancelled:"İptal edildi"};
 function copy(t){navigator.clipboard.writeText(t).then(()=>toast("Kopyalandı"),()=>toast("Kopyalanamadı"))}
 async function loadOrders(){
-  const {data}=await sb.from("orders").select("*").eq("kind",smode==="supply"?"supply":"normal").order("id",{ascending:false}).limit(30);
+  const {data}=await sb.from("orders").select("id,phone,service,country,price,status,code,end_time,created_at,kind").eq("kind",smode==="supply"?"supply":"normal").order("id",{ascending:false}).limit(30);
   const box=$("orders");box.innerHTML="";
   if(!data||!data.length){box.appendChild(mk("div","empty","Henüz sipariş yok. Soldan bir numara al."));return}
   data.forEach(o=>{
@@ -442,9 +504,82 @@ async function poll(){
   if(data&&data.length){
     let done=false;
     for(const o of data){const r=await api({action:"check",orderId:o.id});if(r.order&&r.order.status==="done")done=true}
-    if(done)toast("Kod geldi");
+    if(done){toast("Kod geldi");notifyCode()}
     await loadBalance();await loadOrders();
   }
+}
+
+/* bildirimler */
+let actx=null;
+document.addEventListener("click",()=>{try{actx=actx||new (window.AudioContext||window.webkitAudioContext)();actx.resume()}catch(e){}},{once:true});
+function notifyCode(){
+  try{if(navigator.vibrate)navigator.vibrate([200,100,200])}catch(e){}
+  try{
+    if(actx)[0,0.25].forEach(t=>{const o=actx.createOscillator(),g=actx.createGain();o.type="sine";o.frequency.value=880;g.gain.value=0.15;o.connect(g);g.connect(actx.destination);o.start(actx.currentTime+t);o.stop(actx.currentTime+t+0.15)});
+  }catch(e){}
+  try{if(document.hidden){const t=document.title;document.title="🔔 Kod geldi!";const f=()=>{document.title=t;document.removeEventListener("visibilitychange",f)};document.addEventListener("visibilitychange",f)}}catch(e){}
+}
+const ALERTS=new Set();
+async function toggleAlert(c,s){
+  const k=c+":"+s,on=!ALERTS.has(k);
+  const r=await api({action:"alert_set",country:c,service:s,on});
+  if(r.error){toast(r.error);return}
+  if(on)ALERTS.add(k);else ALERTS.delete(k);
+  toast(on?"Stok gelince haber vereceğiz (site açıkken)":"Stok bildirimi kapatıldı");
+  drawServices();
+}
+async function alertsTick(){
+  if(!ALERTS.size)return;
+  const r=await api({action:"alerts_check"});
+  if(r.error||!r.hit||!r.hit.length)return;
+  r.hit.forEach(h=>{
+    ALERTS.delete(h.country+":"+h.service);
+    const cn=catalog&&catalog.countries[h.country]?catalog.countries[h.country].eng:"";
+    toast("Stok geldi: "+(NAMES[h.service]||h.service.toUpperCase())+(cn?" ("+cn+")":""));
+    if(catalog&&catalog.loaded[h.country]){delete catalog.loaded[h.country];if(selC===h.country)pickCountry(h.country)}
+  });
+  notifyCode();if(catalog&&selC)drawServices();
+}
+
+/* herkese açık fiyat listesi */
+let pubInit=false,pubData=null;
+async function apiPub(body){
+  try{
+    const r=await fetch(SB_URL+"/functions/v1/smart-worker",{method:"POST",headers:{"Content-Type":"application/json",apikey:SB_KEY},body:JSON.stringify(body)});
+    return await r.json();
+  }catch(e){return{error:"Bağlantı hatası"}}
+}
+async function loadPublic(){
+  if(pubInit)return;pubInit=true;
+  drawPub();
+  loadNames().then(drawPub);
+  const r=await apiPub({action:"public_countries"});
+  if(r.error){$("publ").textContent="Fiyat listesi şu an yüklenemedi.";return}
+  const sel=$("pubc");
+  Object.values(r.countries).sort((x,y)=>x.eng.localeCompare(y.eng)).forEach(c=>{const o=mk("option",null,c.eng);o.value=c.id;sel.appendChild(o)});
+}
+$("pubc").onchange=async()=>{
+  const id=$("pubc").value;
+  if(!id){pubData=null;drawPub();return}
+  $("publ").textContent="Yükleniyor…";
+  const r=await apiPub({action:"public_prices",country:id});
+  if(r.error){$("publ").textContent=r.error;return}
+  pubData=r.prices;drawPub();
+};
+$("pubq").oninput=()=>drawPub();
+function drawPub(){
+  const box=$("publ");box.innerHTML="";
+  if(!pubData){box.appendChild(mk("div","sub","Fiyatları görmek için bir ülke seç."));return}
+  const q=$("pubq").value.trim().toLowerCase();
+  const keys=Object.keys(pubData).filter(k=>((NAMES[k]||"").toLowerCase().includes(q)||k.toLowerCase().includes(q)))
+    .sort((x,y)=>(NAMES[x]||x).localeCompare(NAMES[y]||y,"tr"));
+  if(!keys.length){box.appendChild(mk("div","empty","Servis bulunamadı"));return}
+  keys.slice(0,80).forEach(k=>{
+    const row=mk("div","pubrow");
+    row.append(mk("span",null,NAMES[k]||k.toUpperCase()),mk("b",null,TL(pubData[k].cost)+" · Stok "+pubData[k].count));
+    box.appendChild(row);
+  });
+  if(keys.length>80)box.appendChild(mk("div","sub","İlk 80 servis gösteriliyor, diğerleri için ara."));
 }
 
 /* views */
@@ -464,6 +599,7 @@ async function refreshMe(){
   if(m.error)return;
   isAdmin=!!m.isAdmin;$("admtab").classList.toggle("hide",!isAdmin);$("suptab").classList.toggle("hide",!m.supply);
   if(m.refDone){try{localStorage.removeItem("ref")}catch(e){}}
+  ALERTS.clear();(m.alerts||[]).forEach(k=>ALERTS.add(k));if(catalog&&selC)drawServices();
   if(isAdmin)api({action:"admin_overview"}).then(x=>{if(x.pending)setBadge(x.pending.length)});
   const rb=$("rbanner");
   if(m.ordersLeft>0&&m.discountPercent>0){rb.textContent="Referans indirimin aktif: sonraki "+m.ordersLeft+" alışta %"+m.discountPercent+" indirim. Fiyatlar indirimli görünür.";rb.classList.remove("hide")}
@@ -675,6 +811,16 @@ $("nsave").onclick=async()=>{
   fillNames();drawPrices();if(catalog)drawServices();loadOrders();
 };
 
+$("bgo").onclick=async()=>{
+  const percent=num($("bp").value),target=$("bt").value;
+  if(!isFinite(percent)||!$("bp").value.trim()){toast("Bir yüzde yaz");return}
+  const d=await api({action:"admin_bulk",target,percent,dry:true});
+  if(d.error){toast(d.error);return}
+  if(!confirm(d.message+". Onaylıyor musun?"))return;
+  const r=await api({action:"admin_bulk",target,percent});
+  toast(r.error||r.message);
+  if(!r.error){loadAdmin();if(typeof loadSupplyList==="function")loadSupplyList()}
+};
 async function decide(id,approve){
   const r=await api({action:"admin_deposit",id,approve});
   toast(r.error||(approve?"Onaylandı, bakiye eklendi":"Reddedildi"));loadAdmin();
@@ -692,20 +838,22 @@ $("aset").onclick=async()=>{
 
 async function show(session){
   user=session?session.user:null;
+  clearInterval(pollT);clearInterval(tickT);clearInterval(alertT);
+  if(REC&&user){$("auth").classList.add("hide");$("app").classList.add("hide");$("reset").classList.remove("hide");return}
+  $("reset").classList.add("hide");
   $("auth").classList.toggle("hide",!!user);$("app").classList.toggle("hide",!user);
-  clearInterval(pollT);clearInterval(tickT);
-  if(!user)return;
+  if(!user){loadPublic();return}
   $("av").textContent=(user.email||"?")[0].toUpperCase();
   refreshMe();
   await loadNames();await loadBalance();await loadOrders();
   if(!catalog){drawServices();loadCatalog()}
-  pollT=setInterval(poll,5000);tickT=setInterval(tick,1000);
+  pollT=setInterval(poll,5000);tickT=setInterval(tick,1000);alertT=setInterval(alertsTick,60000);
 }
 (function(){
   const q=(new URLSearchParams(location.search).get("ref")||"").trim().toUpperCase().slice(0,12);
   if(q&&/^[A-Z0-9]+$/.test(q)){try{localStorage.setItem("ref",q)}catch(e){}$("rf").value=q;setMode("up")}
 })();
-sb.auth.onAuthStateChange((_e,s)=>setTimeout(()=>show(s),0));
+sb.auth.onAuthStateChange((ev,s)=>{if(ev==="PASSWORD_RECOVERY")REC=true;setTimeout(()=>show(s),0)});
 sb.auth.getSession().then(({data})=>show(data.session));
 </script>
 </body>
